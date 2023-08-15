@@ -66,8 +66,8 @@ class EncodingCategoricalData:
 
 
         else:
-            return ("Please provide a valid encoding method. Available options are: 'LabelEncoding',"
-                    " 'OneHotEncoding', 'BinaryEncoding', 'CountEncoding', 'MeanEncoding', and 'FrequencyEncoding'.")
+            return ("Please provide a valid encoding method. Available options are: LabelEncoding,"
+                    " OneHotEncoding, BinaryEncoding, CountEncoding, MeanEncoding, and FrequencyEncoding.")
 
 
 
