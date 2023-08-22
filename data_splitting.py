@@ -1,5 +1,10 @@
 class DataSplitting:
 
+    """
+    The output in each case is a list like this:
+    lst = [(y1,[x11,x12,...,x1n]),(y2,[x21,x22,x2n]),...,(ym,[xm1,xm2,...,xmn])]
+    """
+
     def __init__(self, features:dict, target:dict, method = 'RandomSplit'):
 
         self.features = features
