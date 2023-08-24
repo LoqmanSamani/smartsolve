@@ -22,7 +22,7 @@ class LinearRegression:
             return self.gradient_descent()
 
 
-        if self.algorithm == 'StochasticGradientDescent':
+        elif self.algorithm == 'StochasticGradientDescent':
             return self.stochastic_gradient_descent()
 
 
@@ -113,8 +113,6 @@ class LinearRegression:
 
         targets = np.array([item[0] for item in self.training_data])
 
-        num_points = len(targets)
-
         predicted = self.get_predictions()
 
         mse = np.mean((targets - predicted)**2)
@@ -151,7 +149,7 @@ class LinearRegression:
 
         targets = np.array([item[0] for item in self.training_data])
 
-        coefficients = np.full(len(targets), initial_coefficients)
+        coefficients = np.full(len(self.training_data[0][1]), initial_coefficients)
 
         for i in range(num_iterations):
 
@@ -190,13 +188,13 @@ class LinearRegression:
 
 
 
-    def stochastic_gradient_descent(self, learning_rate = 0.01, num_iterations = 1000, initial_coefficients = 0, convergence_threshold=1e-6):
+    def stochastic_gradient_descent(self, learning_rate = 0.01, num_iterations = 500, initial_coefficients = 0, convergence_threshold=1e-6):
 
         import numpy as np
 
         targets = np.array([item[0] for item in self.training_data])
 
-        coefficients = np.full(len(targets), initial_coefficients)
+        coefficients = np.full(len(self.training_data[0][1]), initial_coefficients)
 
         for i in range(num_iterations):
 
@@ -236,7 +234,7 @@ class LinearRegression:
 
         targets = np.array([item[0] for item in self.training_data])
 
-        coefficients = np.full(len(targets), initial_coefficients)
+        coefficients = np.full(len(self.training_data[0][1]), initial_coefficients)
 
         for i in range(num_iterations):
 
