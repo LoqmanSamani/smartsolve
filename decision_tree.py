@@ -119,6 +119,48 @@ class DecisionTree:
 
 
 
+    def get_most_common_class(self, data):
+
+        from collections import Counter
+
+        class_labels = [point[0] for point in data]
+
+        class_counts = Counter(class_labels)
+
+        most_common_class = class_counts.most_common(1)[0][0]
+
+
+        return most_common_class
+
+
+
+
+
+
+    def get_best_feature_to_split_on(self, features):
+
+        import numpy as np
+
+        len_data = np.sum([len(subfeature) for subfeature in features[0]])
+
+        gini_imps = []
+
+        for feature in features:
+
+            gini_imp = 1 - np.sum([np.power((len(sub_feature) / len_data), 2) for subfeature in feature])
+
+            gini_imps.append(gini_imp)
+
+
+        best_f_to_split_on = np.min(gini_imps)
+
+
+        return best_f_to_split_on
+
+
+
+
+
 
     def tree_building(self, data=None):
 
@@ -135,6 +177,7 @@ class DecisionTree:
                 # Create a leaf node with the most common class label
                 most_common_class = self.get_most_common_class(data)
 
+
                 return DecisionTreeNode(class_label=most_common_class)
 
 
@@ -144,8 +187,8 @@ class DecisionTree:
 
             most_common_class = self.get_most_common_class(data)
 
-            return DecisionTreeNode(class_label=most_common_class)
 
+            return DecisionTreeNode(class_label=most_common_class)
 
         feature_idx_to_split_on = self.get_best_feature_to_split_on(splited_data)
 
@@ -159,10 +202,12 @@ class DecisionTree:
 
             child_tree = self.tree_building(child_data)
 
-            node.add_child(value, child_tree)
+            node.add_child(value, child_tree)  # Add child node to the current node
 
 
         return node
+
+
 
     def fit(self):
 
@@ -173,6 +218,43 @@ class DecisionTree:
 
 
 
+class DecisionTreeNode:
+
+
+    def __init__(self, class_label=None, feature_idx=None):
+        self.class_label = class_label  # Class label for leaf nodes
+        self.feature_idx = feature_idx  # Index of the feature to split on for non-leaf nodes
+        self.children = {}  # Dictionary to hold child nodes
+
+    def add_child(self, value, child_node):
+
+        self.children[value] = child_node
+
+
+    def is_leaf(self):
+
+        return self.class_label is not None
+
+
+
+
+    def predict(self, sample):
+
+        if self.is_leaf():
+
+            return self.class_label
+
+        value = sample[self.feature_idx]
+
+        if value in self.children:
+
+            child_node = self.children[value]
+
+            return child_node.predict(sample)
+
+        else:
+
+            return 'There is an issue!!!'
 
 
 
