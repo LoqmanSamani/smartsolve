@@ -35,8 +35,6 @@ class KNearestNeighbors:
 
 
 
-
-
     def euclidean_distance(self):
 
         """
@@ -88,8 +86,6 @@ class KNearestNeighbors:
 
 
         return v_distances, distances
-
-
 
 
 
@@ -310,8 +306,6 @@ class KNearestNeighbors:
 
 
 
-
-
     def weighted_average(self, neighbors):
 
         weights = [1/neighbor[1] for neighbor in neighbors]
@@ -469,8 +463,6 @@ class KNearestNeighbors:
 
 
 
-
-
     def knn_regression(self):
 
 
@@ -507,7 +499,6 @@ class KNearestNeighbors:
 
 
 
-
         for point_distances in distances:
 
             sorted_point_distances = sorted(point_distances, key=lambda x: x[1])
@@ -521,7 +512,6 @@ class KNearestNeighbors:
 
 
 
-
         for point_distances in distances1:
 
             sorted_point_distances = sorted(point_distances, key=lambda x: x[1])
@@ -531,10 +521,6 @@ class KNearestNeighbors:
             weighted_average = self.weighted_average(neighbors)
 
             predicted.append(weighted_average)
-
-
-
-
 
 
 
@@ -558,9 +544,6 @@ class KNearestNeighbors:
 
 
 
-
-
-
             for point_distances in v_distances1:
 
                 sorted_point_distances = sorted(point_distances, key=lambda x: x[1])
@@ -572,15 +555,14 @@ class KNearestNeighbors:
                 predicted1.append(weighted_average)
 
 
-            v_count = sum([1 if predicted1[i] == validation_labels[i] else 0 for i in range(len(validation_labels))])
-
-            accuracy = round((v_count / len(validation_labels)) * 100, 2)
 
 
+            mse = np.mean((validation_labels - predicted1) ** 2) # Mean Squared Error
 
 
+        return f"Based on the validation data the model validation MSE is {mse}.", predicted
 
-        return f"Based on the validation data the model accuracy is {accuracy} percent.", predicted
+
 
 
 
