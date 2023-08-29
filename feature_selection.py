@@ -32,13 +32,13 @@ class FeatureSelection:
             return self.lasso_regularization()
 
         elif method == "FeatureElimination":
-            return recursive_feature_elimination()
+            return self.recursive_feature_elimination()
 
         elif method == "SelectkBest":
             return self.select_k_best_features()
 
         elif method == "VarianceThreshold":
-            return variance_threshold()
+            return self.variance_threshold()
 
         else:
             return ("Please provide a valid selection method. Available options are: CorrelationSelection,"
@@ -255,6 +255,7 @@ class FeatureSelection:
         def variance_threshold(self, threshold):
 
             import numpy as np
+            import pandas as pd
 
             load_data = pd.read_csv(self.data)
 
