@@ -3,7 +3,7 @@ class GaussianMixtureModel:
     def __init__(self, training_data, num_components=2, max_iteration=1000, con_tolerance=1e-4):
 
         """
-        the training_data & validation_data must both have this structure:
+        the training_data must have this structure:
         list = [[x11,x12,...,x1n],[x21,x22,x2n],...,[xm1,xm2,...,xmn]]
         """
 
