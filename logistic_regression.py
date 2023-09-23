@@ -5,7 +5,7 @@ class LogisticRegression:
     list = [(y1,[x11,x12,...,x1n]),(y2,[x21,x22,x2n]),...,(ym,[xm1,xm2,...,xmn])]
     """
 
-    def __init__(self, training_data, validation_data, intercept = 0, threshold = 0.5, algorithm = 'GradientDescent'):
+    def __init__(self, training_data, validation_data=None, intercept=0, threshold=0.5, algorithm='GradientDescent'):
 
         self.training_data = training_data
         self.validation_data = validation_data
@@ -85,7 +85,6 @@ class LogisticRegression:
         y is the actual label.
 
         """
-
         import numpy as np
 
 
