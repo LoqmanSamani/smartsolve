@@ -209,9 +209,12 @@ class DecisionTree:
 
 
 
+
     def fit(self):
 
         self.tree = self.tree_building()
+
+        return self.tree  # Return the trained tree
 
 
 
