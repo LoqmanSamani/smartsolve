@@ -311,38 +311,3 @@ class SupportVectorMachines:
         return accuracy
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
