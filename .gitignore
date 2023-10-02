@@ -1,8 +1,6 @@
-### Example user template template
-### Example user template
+# IntelliJ IDEA project files
+.idea/
 
-# IntelliJ project files
-.idea
-*.iml
-out
-gen
+# Python-specific
+__pycache__/
+*.pyc
