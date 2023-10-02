@@ -303,7 +303,7 @@ class LogisticRegression:
 
 
 
-    def adaprive_gradient_algorithm(self, learning_rate = 0.001, num_iterations = 200, initial_coefficients = 0,
+    def adaptive_gradient_algorithm(self, learning_rate = 0.001, num_iterations = 200, initial_coefficients = 0,
                                     convergence_threshold=1e-6, epsilon = 1e-8):
 
         import numpy as np
