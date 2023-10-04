@@ -155,7 +155,7 @@ class LinearRegression:
 
             mse = self.mean_squared_error()
 
-            coefficients1 = [coefficient - (learning_rate* np.gradient(mse, coefficient)) for coefficient in coefficients]
+            coefficients1 = [coefficient - (learning_rate * np.gradient(mse, coefficient)) for coefficient in coefficients]
 
             coefficients_diff = np.linalg.norm(coefficients1 - coefficients)  # Calculate change in coefficients
 

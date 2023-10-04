@@ -1,6 +1,8 @@
 from unittest import TestCase
 
 
+
+
 class TestDecisionTree(TestCase):
     def test_gini_impurity(self):
         self.fail()
@@ -26,12 +28,16 @@ class TestDecisionTree(TestCase):
     def test_fit(self):
         self.fail()
 
-    class TestDecisionTreeNode(TestCase):
-        def test_add_child(self):
-            self.fail()
 
-        def test_is_leaf(self):
-            self.fail()
 
-        def test_predict(self):
-            self.fail()
+
+
+class TestDecisionTreeNode(TestCase):
+    def test_add_child(self):
+        self.fail()
+
+    def test_is_leaf(self):
+        self.fail()
+
+    def test_predict(self):
+        self.fail()

@@ -1,0 +1,7 @@
+# created by virtualenv automatically
+# IntelliJ IDEA project files
+.idea/
+
+# Python-specific
+__pycache__/
+*.pyc

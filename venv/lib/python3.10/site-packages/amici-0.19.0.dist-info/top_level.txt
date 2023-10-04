@@ -1,0 +1,7 @@
+SuiteSparse_config
+amd
+amici
+btf
+colamd
+klu
+sundials
