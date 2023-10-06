@@ -5,14 +5,14 @@ class LogisticRegression:
     list = [(y1,[x11,x12,...,x1n]),(y2,[x21,x22,x2n]),...,(ym,[xm1,xm2,...,xmn])]
     """
 
-    def __init__(self, training_data, validation_data=None, intercept=0, threshold=0.5, algorithm='GradientDescent'):
+    def __init__(self, training_data, validation_data=None, intercept=0, threshold=0.5, algorithm='GradientDescent', num_iteration=100):
 
         self.training_data = training_data
         self.validation_data = validation_data
         self.intercept = intercept
         self.threshold = threshold
         self.algorithm = algorithm
-
+        self.num_iteration = num_iteration
 
 
 
@@ -43,10 +43,13 @@ class LogisticRegression:
 
 
 
+    # TODO: you should define a train function which calls other functions
+
+    def train(self):
+        pass
 
 
-
-    def get_predictions(self):
+    def predict(self, data):
 
         import numpy as np
 
