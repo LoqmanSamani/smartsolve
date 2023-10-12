@@ -1,5 +1,5 @@
 # Import necessary libraries and modules
-from split import SplitData
+from learnflow.preprocessing import SplitData
 import pandas as pd
 import random
 from datetime import datetime, timedelta
@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 
 # Define the path to the CSV data file
-path = ("...")
+path = "sample_data.csv"
 
 
 # Read the data from the CSV file into a DataFrame
@@ -52,7 +52,7 @@ r_train, r_validation, r_test = random_model.random()
 data_points = [data[:200], data[200:450], data[450:920], data[920:]]
 
 # Initialize a SplitData instance for stratified splitting
-stratified_model = SplitData(data=data_points, method='Stratified', train=0.8, validation=0.15, test=0.20)
+stratified_model = SplitData(data=data_points, method='Stratified', train=0.7, validation=0.1, test=0.2)
 
 # Perform stratified split
 s_train, s_test, s_validation = stratified_model.stratified()
@@ -83,7 +83,7 @@ t_train, t_validation, t_test = time_series_model.time_series()
 
 
 # Initialize a SplitData instance for K-fold cross-validation
-cross_validation_model = SplitData(data=data, method='KFold', train=80, validation=0.1, test=0.20, num_folds=20)
+cross_validation_model = SplitData(data=data, method='KFold', train=0.7, validation=0.1, test=0.20, num_folds=3)
 
 # Perform K-fold cross-validation
 c_train, c_validation, c_test = cross_validation_model.cross_validation()
@@ -106,22 +106,27 @@ print([len(f) for f in c_train])
 print([len(f) for f in c_validation])
 print([len(f) for f in c_test])
 
+
+
+
+
+
+
 """
 Output:
 Random Split Shapes:
-720 80 200
+700 100 200
 
 Stratified Split Shapes:
-651 149 200
+700 100 200
 
 Time Series Split Shapes:
 800 0 200
 
 K-Fold Cross-Validation Shapes:
-[850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850, 850]
-[100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
-[50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50]
-
+[700, 700, 700]
+[100, 100, 100]
+[200, 200, 200]
 """
 
 
