@@ -13,6 +13,7 @@ class LogisticRegression:
         self.threshold = threshold
         self.algorithm = algorithm
         self.num_iteration = num_iteration
+        self.coefficients = None
 
 
 

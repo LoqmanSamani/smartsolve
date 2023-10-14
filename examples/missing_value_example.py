@@ -8,7 +8,7 @@ from learnflow.preprocessing import MissingValue
 
 # Load data from a CSV file
 # data: Customer Satisfaction in Airline, https://www.kaggle.com/datasets/yakhyojon/customer-satisfaction-in-airline
-path = "/home/loqman/PycharmProjects/pythonProject/datasets/Invistico_Airline.csv"
+path = "Invistico_Airline.csv"
 
 
 

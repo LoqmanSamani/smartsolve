@@ -1,10 +1,8 @@
 
-# Import specific classes/modules from each sub-module
-from .preprocessing import SplitData
-from .preprocessing import MissingValue
-#from .models import LinearRegression
-#from .evaluation import Validation
-
+# Import specific classes/modules from each submodule
+from .preprocessing import AnalyseData, SplitData, MissingValue, SelectFeature
+from .models import LinearRegression, LogisticRegression, DecisionTree
+from .evaluation import Validation
 
 
 # Define package-level variables or configuration
@@ -14,12 +12,16 @@ DEFAULT_CONFIG = {
     "debug": False,
 }
 
-# This line specifies what gets imported when using 'from my_package import *'
+# This line specifies what gets imported when using 'from learn-flow import *'
 __all__ = [
+    "AnalyseData",
     "SplitData",
     "MissingValue",
-    #"LinearRegression",
-    #"Validation",
+    "SelectFeature",
+    "LinearRegression",
+    "LogisticRegression",
+    "Validation",
+    "DecisionTree",
     "PACKAGE_VERSION",
     "DEFAULT_CONFIG",
 ]

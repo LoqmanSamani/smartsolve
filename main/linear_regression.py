@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class LinearRegression:
 
     """
@@ -11,6 +14,8 @@ class LinearRegression:
         self.intercept = intercept
         self.algorithm = algorithm
         self.num_parts = num_parts
+
+        self.coefficients = None
 
 
 
@@ -44,9 +49,10 @@ class LinearRegression:
 
 
 
+    def train(self):
+        pass
 
-
-    def get_predictions(self):
+    def prediction(self):
 
         import numpy as np
         import random
@@ -125,11 +131,10 @@ class LinearRegression:
 
 
 
-    def predict(self, features, coefficients):
+    def prediction(self, features, coefficients):
 
-        import numpy as np
-
-        return np.dot(coefficients, features.T)
+        predicted = np.dot(coefficients, features.T)
+        return predicted
 
 
 
