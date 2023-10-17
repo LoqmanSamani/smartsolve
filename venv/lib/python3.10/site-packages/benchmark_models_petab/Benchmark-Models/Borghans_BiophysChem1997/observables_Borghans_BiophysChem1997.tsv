@@ -1,2 +1,0 @@
-observableId	observableFormula	observableName	noiseDistribution	noiseFormula	observableTransformation
-Ca	observableParameter1_Ca + Z_state * observableParameter2_Ca		normal	noiseParameter1_Ca	log10
