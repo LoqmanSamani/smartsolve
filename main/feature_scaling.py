@@ -1,7 +1,11 @@
+import pandas as pd
+import numpy as np
+
+
 class FeatureScaling:
 
     """
-    In this class, there are 9 different normalization methods for numeric data
+    In this class, there are 9 different normalization methods for numeric data:
 
     1) Min-max scaling
     2) Standardization (Z-score normalization)
@@ -13,206 +17,310 @@ class FeatureScaling:
     8) Box-Cox transformation
     9) Yeo-Johnson transformation
     """
+    def min_max(self, data, columns=None):
+        """
+        Min-Max scaling (Normalization).
 
-    def __init__(self, data, lam=None):
-        self.data = data
-        self.lam = lam
+        :param data: Input DataFrame containing numeric data.
+        :param columns: List of columns to normalize.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with Min-Max normalized data.
+        """
 
+        norm_data = {}
 
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
 
-    def min_max_normalization(self):
+        for col in data.columns:
+            if col in columns:
+                values = data[col].values
 
-        import numpy as np
-        import pandas as pd
+                if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
+                    min_val = np.min(values)
+                    max_val = np.max(values)
+                    norm_col = [(value - min_val) / (max_val - min_val) for value in values]
+                    norm_data[col] = norm_col
+                else:
+                    norm_data[col] = values
+            else:
+                norm_data[col] = data[col]
 
-        normalized_data = {}
+        return pd.DataFrame(norm_data)
 
-        for col in self.data.columns:
+    def z_score(self, data, columns=None):
+        """
+        Standardization (Z-score normalization).
 
-            temporary_col = self.data[col].values
+        :param data: Input DataFrame containing numeric data.
+        :param columns: List of columns to standardize.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with Z-score standardized data.
+        """
 
-            min_val = np.min(temporary_col)
-            max_val = np.max(temporary_col)
+        norm_data = {}
 
-            normalized_col = [(val - min_val)/(max_val - min_val) for val in temporary_col]
-            normalized_data[col] = normalized_col
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
 
-        return pd.DataFrame(normalized_data)
+        for col in data.columns:
+            if col in columns:
 
+                values = data[col].values
 
+                if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
 
+                    mean_val = np.mean(values)
+                    std_val = np.std(values)
 
-    def z_score_normalization(self):
+                    norm_col = [(value - mean_val) / std_val for value in values]
+                    norm_data[col] = norm_col
 
-        import numpy as np
-        import pandas as pd
+            else:
 
-        normalized_data = {}
+                norm_data[col] = data[col]
 
-        for col in self.data.columns:
-            temporary_col = self.data[col].values
-            mean_val = np.mean(temporary_col)
-            std_val = np.std(temporary_col)
+        return pd.DataFrame(norm_data)
 
-            normalized_col = [(val - mean_val) / std_val  for val in temporary_col]
-            normalized_data[col] = normalized_col
+    def robust(self, data, columns=None):
+        """
+        Robust scaling.
 
-        return pd.DataFrame(normalized_data)
+        :param data: Input DataFrame containing numeric data.
+        :param columns: List of columns to scale robustly.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with robustly scaled data.
+        """
 
+        norm_data = {}
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
 
+        for col in data.columns:
 
+            if col in columns:
 
-    def robust_scaling(self):
+                values = data[col].values
 
-        import numpy as np
-        import pandas as pd
+                if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
 
-        normalized_data = {}
+                    med_val = np.median(values)
+                    q1 = np.percentile(values, 25)
+                    q3 = np.percentile(values, 75)
+                    iqr = q3 - q1
 
-        for col in self.data.columns:
+                    norm_col = [(val - med_val) / iqr for val in values]
+                    norm_data[col] = norm_col
 
-            temporary_col = self.data[col].values
+            else:
 
-            median_val = np.median(temporary_col)
-            q1 = np.percentile(temporary_col,25)
-            q3 = np.percentile(temporary_col, 75)
-            iqr_val = q3 - q1
+                norm_data[col] = data[col]
 
-            normalized_col = [(val - median_val) / iqr_val  for val in temporary_col]
-            normalized_data[col] = normalized_col
+        return pd.DataFrame(norm_data)
 
-        return pd.DataFrame(normalized_data)
+    def abs_max(self, data, columns=None):
+        """
+        Max-Absolute scaling.
 
+        :param data: Input DataFrame containing numeric data.
+        :param columns: List of columns to scale using Max-Absolute scaling.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with Max-Absolute scaled data.
+        """
 
+        norm_data = {}
 
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
 
-    def max_absolute_scaling(self):
+        for col in data.columns:
+            if col in columns:
 
-        import numpy as np
-        import pandas as pd
+                values = data[col].values
 
-        normalized_data = {}
+                if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
 
-        for col in self.data.columns:
+                    abs_max = abs(np.max(values))
 
-            temporary_col = self.data[col].values
+                    norm_col = [value / abs_max for value in values]
+                    norm_data[col] = norm_col
+            else:
+                norm_data[col] = data[col]
 
-            max_abs = abs(np.max(temporary_col))
+        return pd.DataFrame(norm_data)
 
-            normalized_col =[val / max_abs for val in temporary_col]
-            normalized_data[col] = normalized_col
+    def pow_transform(self, data, lam=2, columns=None):
+        """
+        Power transformation.
 
-        return pd.DataFrame(normalized_data)
+        :param data: Input DataFrame containing numeric data.
+        :param lam: Lambda value for the power transformation.
+        :param columns: List of columns to apply the power transformation.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with power-transformed data.
+        """
 
+        norm_data = {}
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
 
+        for col in data.columns:
+            if col in columns:
 
+                values = data[col].values
 
-    def power_transform(self):
+                if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
 
-        import numpy as np
-        import pandas as pd
+                    norm_col = [np.power(value, lam) for value in values]
+                    norm_data[col] = norm_col
 
-        normalized_data = {}
+            else:
 
-        for col in self.data.columns:
+                norm_data[col] = data[col]
 
-            temporary_col = self.data[col].values
-            normalized_col = [np.power(val, self.lam) for val in temporary_col]
-            normalized_data[col] = normalized_col
+        return pd.DataFrame(norm_data)
 
-        return pd.DataFrame(normalized_data)
+    def unit_vector(self, data, columns=None):
+        """
+        Unit Vector Scaling (L2 Normalization).
 
+        :param data: Input DataFrame containing numeric data.
+        :param columns: List of columns to apply L2 normalization.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with unit vector scaled data.
+        """
 
+        norm_data = {}
 
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
 
-    def unit_vector_scaling(self):
+        for col in columns:
+            values = data[col].values
 
-        import numpy as np
-        import pandas as pd
+            if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
+                norm_data[col] = values
 
-        normalized_data = {}
+        norm_df = pd.DataFrame(norm_data)
 
-        norms = np.linalg.norm(self.data.values, axis=1, keepdims=True)
+        norms = np.linalg.norm(norm_df.values, axis=1, keepdims=True)
+        normalized_data = norm_df.div(norms, axis=0)
 
-        for col in self.data.columns:
-            temporary_col = self.data[col].values
-            cal_norms = norms[0:len(self.data[col])]
-            normalized_col = [val / norm for val, norm in zip(temporary_col, cal_norms)]
-            normalized_data[col] = normalized_col
+        for column in data.columns:
+            if column not in columns:
+                normalized_data[column] = data[column]
 
-        return pd.DataFrame(normalized_data)
+        return normalized_data
 
 
+    def log_transform(self, data, columns=None):
+        """
+        Log transformation.
 
+        :param data: Input DataFrame containing numeric data.
+        :param columns: List of columns to apply the log transformation.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with log-transformed data.
+        """
 
-    def log_transformation(self):
+        norm_data = {}
 
-        import numpy as np
-        import pandas as pd
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
 
-        normalized_data = {}
+        for col in data.columns:
+            if col in columns:
 
-        for col in self.data.columns:
+                values = data[col].values
 
-            temporary_col = self.data[col].values
+                if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
 
-            normalized_col = [np.log(val) for val in temporary_col]
-            normalized_data[col] = normalized_col
+                    # Add a small constant to avoid logarithm of 0
+                    norm_col = [np.log(val + 1e-10) for val in values]
+                    norm_data[col] = norm_col
 
-        return pd.DataFrame(normalized_data)
+            else:
 
+                norm_data[col] = data[col]
 
+        return pd.DataFrame(norm_data)
 
+    def box_cox(self, data, lam=2, columns=None):
+        """
+        Box-Cox transformation.
 
-    def box_cox_transformation(self):
+        :param data: Input DataFrame containing numeric data.
+        :param lam: Lambda value for the Box-Cox transformation.
+        :param columns: List of columns to apply the Box-Cox transformation.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with Box-Cox transformed data.
+        """
 
-        import numpy as np
-        import pandas as pd
+        norm_data = {}
 
-        normalized_data = {}
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
 
-        for col in self.data.columns:
+        for col in data.columns:
+            if col in columns:
 
-            temporary_col = self.data[col].values
+                values = data[col].values
 
-            normalized_col = [np.power(val, self.lam - 1) if self.lam != 0
-                              else np.log(val) for val in temporary_col]
+                if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
 
-            normalized_data[col] = normalized_col
-
-        return pd.DataFrame(normalized_data)
-
-
-
-
-    def yeo_johnson_transformation(self):
-
-        import numpy as np
-        import pandas as pd
-
-        normalized_data = {}
-
-        for col in self.data.columns:
-
-            temporary_col = self.data[col].values
-            normalized_col = []
-
-            for val in temporary_col:
-
-                if val > 0 and self.lam != 0:
-                    normalized_col.append(np.power(val+1, self.lam-1) / self.lam)
-                elif val < 0 and self.lam != 0:
-                    normalized_col.append(-(np.power(-val+1, -self.lam+1) / self.lam))
-
-                elif val < 0 and self.lam == 0:
-                    normalized_col.append(np.log(val+1))
-
-                elif val < 0 and self.lam == 0:
-                    normalized_col.append(-(np.log(-val+1)))
+                    norm_col = [np.power(value, lam - 1) if lam != 0 else np.log(value) for value in values]
+                    norm_data[col] = norm_col
 
                 else:
-                    normalized_col.append(val)
 
-            normalized_data[col] = normalized_col
+                    norm_data[col] = values
 
-        return pd.DataFrame(normalized_data)
+        return pd.DataFrame(norm_data)
+
+    def yeo_johnson(self, data, lam=2, columns=None):
+        """
+        Yeo-Johnson transformation.
+
+        :param data: Input DataFrame containing numeric data.
+        :param lam: Lambda value for the Yeo-Johnson transformation.
+        :param columns: List of columns to apply the Yeo-Johnson transformation.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with Yeo-Johnson transformed data.
+        """
+
+        norm_data = {}
+
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
+
+        for col in data.columns:
+            if col in columns:
+
+                values = data[col].values
+
+                if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
+
+                    norm_col = []
+                    for value in values:
+                        if value > 0 and lam != 0:
+                            norm_col.append(np.power(value+1, lam-1) / lam)
+                        elif value < 0 and lam != 0:
+                            norm_col.append(-(np.power(-value+1, -lam+1) / lam))
+
+                        elif value < 0 and lam == 0:
+                            norm_col.append(np.log(value+1))
+
+                        elif value < 0 and lam == 0:
+                            norm_col.append(-(np.log(-value+1)))
+
+                        else:
+                            norm_col.append(value)
+
+                    norm_data[col] = norm_col
+
+                else:
+
+                    norm_data[col] = values
+
+        return pd.DataFrame(norm_data)
+

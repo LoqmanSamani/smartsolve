@@ -798,3 +798,532 @@ class SelectFeature:
                 load_data.drop(columns=[feature], inplace=True)
 
         return load_data
+
+
+class CategoricalData:
+
+    def l_encoding(self, data, labels=None, nums=None, index=1):
+        """
+        Label Encoding: Assigns a unique integer to each category. Suitable for
+        ordinal categorical variables with a meaningful order.
+
+        :param data: Input DataFrame containing categorical data.
+        :param labels: Optional custom labels to use for encoding.
+        :param nums: Optional list of integers to use for encoding.
+        :param index: Optional custom index to start numbering from.
+        :return: DataFrame with label-encoded categorical data.
+        """
+        labeled_data = {}
+
+        if labels:
+            if not nums:
+                nums = [i for i in range(index, len(labels) + index)]
+                labels_dict = {label: num for label, num in zip(labels, nums)}
+            else:
+                labels_dict = {label: num for label, num in zip(labels, nums)}
+
+        else:
+            labels = []
+            for col in data.columns:
+                labels.extend(set(data[col].values))
+            nums = [i for i in range(len(labels))]
+            labels_dict = {label: num for label, num in zip(set(labels), nums)}
+
+        for col in data.columns:
+            values = data[col].values
+            mapped_labels = [labels_dict[value] for value in values]
+            labeled_data[col] = mapped_labels
+
+        return pd.DataFrame(labeled_data)
+
+    def onehot_encoding(self, data, yes=None, no=None):
+        """
+        One-Hot Encoding: Creates binary columns for each category.
+        Suitable for nominal categorical variables without a meaningful order.
+
+        :param data: Input DataFrame containing categorical data.
+        :param yes: Value to use for encoding category presence (default: 1).
+        :param no: Value to use for encoding absence of category (default: 0).
+        :return: DataFrame with one-hot encoded categorical data.
+        """
+
+        labeled_data = {}
+        if yes:
+            i = yes
+        else:
+            i = 1
+        if no:
+            j = no
+        else:
+            j = 0
+
+        for col in data.columns:
+
+            temp_cols = {}
+            values = list(data[col].values)
+            labels = set(values)
+
+            for label in labels:
+
+                new_col = [i if value == label else j for value in values]
+                name = f"{col}_{label}"
+                temp_cols[name] = new_col
+
+            labeled_data.update(temp_cols)
+
+        return pd.DataFrame(labeled_data)
+
+    def bin_encoding(self, data, labels=None, nums=None, index=1):
+        """
+        Binary Encoding: Represents each category with binary code, combining label
+        and one-hot encoding. Efficient for high-cardinality features.
+
+        :param data: Input DataFrame containing categorical data.
+        :param labels: Optional custom labels to use for encoding.
+        :param nums: Optional binary encoding values for labels.
+        :param index: Optional custom index to start binary encoding from.
+        :return: DataFrame with binary encoded categorical data.
+        """
+
+        labeled_data = {}
+        if labels and not nums:
+            nums = [bin(i)[2:] for i in range(index, len(labels) + index)]  # Remove the '0b' prefix from the binary numbers
+            labels_dict = dict(zip(labels, nums))
+
+        elif labels and nums:
+            bin_nums = [bin(num)[2:] for num in nums]
+            labels_dict = dict(zip(labels, bin_nums))
+
+        elif not labels and nums:
+            labels = []
+            for col in data.columns:
+                labels.extend(set(data[col].values))
+            labels = set(labels)
+            bin_nums = [bin(num)[2:] for num in nums]
+            labels_dict = dict(zip(labels, bin_nums))
+        else:
+            labels = []
+            for col in data.columns:
+                labels.extend(set(data[col].values))
+            labels = set(labels)
+            nums = [bin(i)[2:] for i in range(len(labels))]
+            labels_dict = dict(zip(labels, nums))
+
+        for col in data.columns:
+
+            values = data[col].values
+            mapped_labels = [labels_dict[value] for value in values]
+            labeled_data[col] = mapped_labels
+
+        return pd.DataFrame(labeled_data)
+
+    def count_encoding(self, data):
+        """
+        Count Encoding: Replaces each category with its occurrence
+        count in the dataset. Captures category prevalence information.
+
+        :param data: Input DataFrame containing categorical data.
+        :return: DataFrame with count-encoded categorical data.
+        """
+
+        labeled_data = {}
+
+        for col in data.columns:
+
+            values = list(data[col].values)
+            labels = set(values)
+
+            encoded_col = [(label, values.count(label)) for label in labels]
+
+            labeled_data[col] = encoded_col
+
+        return labeled_data
+
+    def mean_encoding(self, data, target=None):
+        """
+        Mean Encoding (Target Encoding): Replaces categories with the mean
+        of the target variable for that category. Captures feature-target relationship.
+
+        :param data: Input DataFrame containing categorical data.
+        :param target: Optional target variable for encoding.
+                       If not provided, unique target values from the data will be used.
+        :return: DataFrame with target-encoded categorical data.
+        """
+        if not target:
+            target = []
+            for col in data.columns:
+                target.extend(set(data[col].values))
+            target = list(set(target))
+            target = [i for i in range(len(target))]
+
+        labeled_data = {}
+
+        for col in data.columns:
+
+            temp_dict = {}
+
+            values = list(data[col].values)
+
+            temp_list = [value for value in zip(values, target)]
+
+            labels = list(set(values))
+
+            for label in labels:
+
+                mean_value = np.mean([value[1] for value in temp_list if value[0] == label])
+
+                temp_dict[label] = mean_value
+
+            labeled_data[col] = temp_dict
+
+        return labeled_data
+
+    def freq_encoding(self, data, r=2):
+        """
+        Frequency Encoding: Replaces categories with their frequency in the dataset.
+        Suitable for nominal categorical features.
+
+        :param data: Input DataFrame containing categorical data.
+        :param r: Number of decimal places to round the frequency values.
+        :return: DataFrame with frequency-encoded categorical data.
+        """
+
+        labeled_data = {}
+
+        for col in data.columns:
+
+            values = list(data[col].values)
+            labels = list(set(values))
+
+            encoded_col = [(label, round(values.count(label)/len(values)), r) for label in labels]
+
+            labeled_data[col] = encoded_col
+
+        return labeled_data
+
+
+
+
+class FeatureScaling:
+
+    """
+    In this class, there are 9 different normalization methods for numeric data:
+
+    1) Min-max scaling
+    2) Standardization (Z-score normalization)
+    3) Robust scaling
+    4) Max-Absolute scaling
+    5) Power transformation
+    6) Unit Vector Scaling (L2 Normalization)
+    7) Log transformation
+    8) Box-Cox transformation
+    9) Yeo-Johnson transformation
+    """
+    def min_max(self, data, columns=None):
+        """
+        Min-Max scaling (Normalization).
+
+        :param data: Input DataFrame containing numeric data.
+        :param columns: List of columns to normalize.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with Min-Max normalized data.
+        """
+
+        norm_data = {}
+
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
+
+        for col in data.columns:
+            if col in columns:
+                values = data[col].values
+
+                if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
+                    min_val = np.min(values)
+                    max_val = np.max(values)
+                    norm_col = [(value - min_val) / (max_val - min_val) for value in values]
+                    norm_data[col] = norm_col
+                else:
+                    norm_data[col] = values
+            else:
+                norm_data[col] = data[col]
+
+        return pd.DataFrame(norm_data)
+
+    def z_score(self, data, columns=None):
+        """
+        Standardization (Z-score normalization).
+
+        :param data: Input DataFrame containing numeric data.
+        :param columns: List of columns to standardize.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with Z-score standardized data.
+        """
+
+        norm_data = {}
+
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
+
+        for col in data.columns:
+            if col in columns:
+
+                values = data[col].values
+
+                if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
+
+                    mean_val = np.mean(values)
+                    std_val = np.std(values)
+
+                    norm_col = [(value - mean_val) / std_val for value in values]
+                    norm_data[col] = norm_col
+
+            else:
+
+                norm_data[col] = data[col]
+
+        return pd.DataFrame(norm_data)
+
+    def robust(self, data, columns=None):
+        """
+        Robust scaling.
+
+        :param data: Input DataFrame containing numeric data.
+        :param columns: List of columns to scale robustly.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with robustly scaled data.
+        """
+
+        norm_data = {}
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
+
+        for col in data.columns:
+
+            if col in columns:
+
+                values = data[col].values
+
+                if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
+
+                    med_val = np.median(values)
+                    q1 = np.percentile(values, 25)
+                    q3 = np.percentile(values, 75)
+                    iqr = q3 - q1
+
+                    norm_col = [(val - med_val) / iqr for val in values]
+                    norm_data[col] = norm_col
+
+            else:
+
+                norm_data[col] = data[col]
+
+        return pd.DataFrame(norm_data)
+
+    def abs_max(self, data, columns=None):
+        """
+        Max-Absolute scaling.
+
+        :param data: Input DataFrame containing numeric data.
+        :param columns: List of columns to scale using Max-Absolute scaling.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with Max-Absolute scaled data.
+        """
+
+        norm_data = {}
+
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
+
+        for col in data.columns:
+            if col in columns:
+
+                values = data[col].values
+
+                if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
+
+                    abs_max = abs(np.max(values))
+
+                    norm_col = [value / abs_max for value in values]
+                    norm_data[col] = norm_col
+            else:
+                norm_data[col] = data[col]
+
+        return pd.DataFrame(norm_data)
+
+    def pow_transform(self, data, lam=2, columns=None):
+        """
+        Power transformation.
+
+        :param data: Input DataFrame containing numeric data.
+        :param lam: Lambda value for the power transformation.
+        :param columns: List of columns to apply the power transformation.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with power-transformed data.
+        """
+
+        norm_data = {}
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
+
+        for col in data.columns:
+            if col in columns:
+
+                values = data[col].values
+
+                if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
+
+                    norm_col = [np.power(value, lam) for value in values]
+                    norm_data[col] = norm_col
+
+            else:
+
+                norm_data[col] = data[col]
+
+        return pd.DataFrame(norm_data)
+
+    def unit_vector(self, data, columns=None):
+        """
+        Unit Vector Scaling (L2 Normalization).
+
+        :param data: Input DataFrame containing numeric data.
+        :param columns: List of columns to apply L2 normalization.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with unit vector scaled data.
+        """
+
+        norm_data = {}
+
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
+
+        for col in columns:
+            values = data[col].values
+
+            if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
+                norm_data[col] = values
+
+        norm_df = pd.DataFrame(norm_data)
+
+        norms = np.linalg.norm(norm_df.values, axis=1, keepdims=True)
+        normalized_data = norm_df.div(norms, axis=0)
+
+        for column in data.columns:
+            if column not in columns:
+                normalized_data[column] = data[column]
+
+        return normalized_data
+
+
+    def log_transform(self, data, columns=None):
+        """
+        Log transformation.
+
+        :param data: Input DataFrame containing numeric data.
+        :param columns: List of columns to apply the log transformation.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with log-transformed data.
+        """
+
+        norm_data = {}
+
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
+
+        for col in data.columns:
+            if col in columns:
+
+                values = data[col].values
+
+                if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
+
+                    # Add a small constant to avoid logarithm of 0
+                    norm_col = [np.log(val + 1e-10) for val in values]
+                    norm_data[col] = norm_col
+
+            else:
+
+                norm_data[col] = data[col]
+
+        return pd.DataFrame(norm_data)
+
+    def box_cox(self, data, lam=2, columns=None):
+        """
+        Box-Cox transformation.
+
+        :param data: Input DataFrame containing numeric data.
+        :param lam: Lambda value for the Box-Cox transformation.
+        :param columns: List of columns to apply the Box-Cox transformation.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with Box-Cox transformed data.
+        """
+
+        norm_data = {}
+
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
+
+        for col in data.columns:
+            if col in columns:
+
+                values = data[col].values
+
+                if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
+
+                    norm_col = [np.power(value, lam - 1) if lam != 0 else np.log(value) for value in values]
+                    norm_data[col] = norm_col
+
+                else:
+
+                    norm_data[col] = values
+
+        return pd.DataFrame(norm_data)
+
+    def yeo_johnson(self, data, lam=2, columns=None):
+        """
+        Yeo-Johnson transformation.
+
+        :param data: Input DataFrame containing numeric data.
+        :param lam: Lambda value for the Yeo-Johnson transformation.
+        :param columns: List of columns to apply the Yeo-Johnson transformation.
+                        If None, all numeric columns are selected.
+        :return: DataFrame with Yeo-Johnson transformed data.
+        """
+
+        norm_data = {}
+
+        if not columns:
+            columns = data.select_dtypes(include=['int', 'float']).columns
+
+        for col in data.columns:
+            if col in columns:
+
+                values = data[col].values
+
+                if all(np.issubdtype(value, int) or np.issubdtype(value, float) for value in values):
+
+                    norm_col = []
+                    for value in values:
+                        if value > 0 and lam != 0:
+                            norm_col.append(np.power(value+1, lam-1) / lam)
+                        elif value < 0 and lam != 0:
+                            norm_col.append(-(np.power(-value+1, -lam+1) / lam))
+
+                        elif value < 0 and lam == 0:
+                            norm_col.append(np.log(value+1))
+
+                        elif value < 0 and lam == 0:
+                            norm_col.append(-(np.log(-value+1)))
+
+                        else:
+                            norm_col.append(value)
+
+                    norm_data[col] = norm_col
+
+                else:
+
+                    norm_data[col] = values
+
+        return pd.DataFrame(norm_data)
+
+

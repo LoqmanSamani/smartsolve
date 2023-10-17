@@ -1,199 +1,207 @@
-class EncodingCategoricalData:
-
-    """
-
-    This class provides various categorical encoding methods
-    for transforming categorical features.
-
-    Available methods:
-
-    1) Label Encoding:
-       Assigns a unique integer to each category. Suitable for
-       ordinal categorical variables with a meaningful order.
-
-    2) One-Hot Encoding:
-       Creates binary columns for each category. Suitable for
-       nominal categorical variables without a meaningful order.
-
-    3) Binary Encoding:
-       Represents each category with binary code, combining label
-       and one-hot encoding. Efficient for high-cardinality features.
-
-    4) Count Encoding:
-       Replaces each category with its occurrence count in the dataset.
-       Captures category prevalence information.
-
-    5) Target Encoding (Mean Encoding):
-       Replaces categories with the mean of the target variable for
-       that category. Captures feature-target relationship.
-
-    6) Frequency Encoding:
-       Replaces categories with their frequency in the dataset.
-        Suitable for nominal categorical features.
-
-    """
-
-    def __init__(self, data, labels=None, target=None):
-
-        self.data = data
-        self.labels = labels
-        self.target = target
+import pandas as pd
+import numpy as np
 
 
-    def __call__(self, method):
+class CategoricalData:
 
-        if method == "LabelEncoding":
-            return self.label_encoding()
+    def l_encoding(self, data, labels=None, nums=None, index=1):
+        """
+        Label Encoding: Assigns a unique integer to each category. Suitable for
+        ordinal categorical variables with a meaningful order.
 
-        elif method == "OneHotEncoding":
-            return self.one_hot_encoding()
+        :param data: Input DataFrame containing categorical data.
+        :param labels: Optional custom labels to use for encoding.
+        :param nums: Optional list of integers to use for encoding.
+        :param index: Optional custom index to start numbering from.
+        :return: DataFrame with label-encoded categorical data.
+        """
+        labeled_data = {}
 
-
-        elif method == "BinaryEncoding":
-            return self.binary_encoding()
-
-
-        elif method == "CountEncoding":
-            return self.count_encoding()
-
-
-        elif method == "MeanEncoding":
-            return self.target_encoding()
-
-
-        elif method == "FrequencyEncoding":
-            return self.frequency_encoding()
-
+        if labels:
+            if not nums:
+                nums = [i for i in range(index, len(labels) + index)]
+                labels_dict = {label: num for label, num in zip(labels, nums)}
+            else:
+                labels_dict = {label: num for label, num in zip(labels, nums)}
 
         else:
-            return ("Please provide a valid encoding method. Available options are: LabelEncoding,"
-                    " OneHotEncoding, BinaryEncoding, CountEncoding, MeanEncoding, and FrequencyEncoding.")
+            labels = []
+            for col in data.columns:
+                labels.extend(set(data[col].values))
+            nums = [i for i in range(len(labels))]
+            labels_dict = {label: num for label, num in zip(set(labels), nums)}
 
-
-
-
-
-    def label_encoding(self):
-
-        import pandas as pd
-
-        labeled_data = {}
-        nums = [i for i in range(len(self.labels))]
-        labels_dict = dict(zip(self.labels, nums))
-
-        for col in self.data.columns:
-            temporary_col = self.data[col].values
-            mapped_labels = [labels_dict[value] for value in temporary_col]
+        for col in data.columns:
+            values = data[col].values
+            mapped_labels = [labels_dict[value] for value in values]
             labeled_data[col] = mapped_labels
 
         return pd.DataFrame(labeled_data)
 
+    def onehot_encoding(self, data, yes=None, no=None):
+        """
+        One-Hot Encoding: Creates binary columns for each category.
+        Suitable for nominal categorical variables without a meaningful order.
 
-
-    def one_hot_encoding(self):
-
-        import pandas as pd
+        :param data: Input DataFrame containing categorical data.
+        :param yes: Value to use for encoding category presence (default: 1).
+        :param no: Value to use for encoding absence of category (default: 0).
+        :return: DataFrame with one-hot encoded categorical data.
+        """
 
         labeled_data = {}
+        if yes:
+            i = yes
+        else:
+            i = 1
+        if no:
+            j = no
+        else:
+            j = 0
 
-        for col in self.data.columns:
-            temporary_cols = {}
-            temporary_col = list(self.data[col].values)
+        for col in data.columns:
 
-            labels = list(set(temporary_col))
+            temp_cols = {}
+            values = list(data[col].values)
+            labels = set(values)
 
             for label in labels:
 
-                new_col = [1 if val == label else 0 for val in temporary_col]
-                new_col_name = f"{col}_{label}"
-                temporary_cols[new_col_name] = new_col
+                new_col = [i if value == label else j for value in values]
+                name = f"{col}_{label}"
+                temp_cols[name] = new_col
 
-            labeled_data.update(temporary_cols)
+            labeled_data.update(temp_cols)
 
         return pd.DataFrame(labeled_data)
 
+    def bin_encoding(self, data, labels=None, nums=None, index=1):
+        """
+        Binary Encoding: Represents each category with binary code, combining label
+        and one-hot encoding. Efficient for high-cardinality features.
 
-
-
-    def binary_encoding(self):
-
-        import pandas as pd
+        :param data: Input DataFrame containing categorical data.
+        :param labels: Optional custom labels to use for encoding.
+        :param nums: Optional binary encoding values for labels.
+        :param index: Optional custom index to start binary encoding from.
+        :return: DataFrame with binary encoded categorical data.
+        """
 
         labeled_data = {}
+        if labels and not nums:
+            nums = [bin(i)[2:] for i in range(index, len(labels) + index)]  # Remove the '0b' prefix from the binary numbers
+            labels_dict = dict(zip(labels, nums))
 
-        nums = [bin(i)[2:] for i in range(len(self.labels))]  # Remove the '0b' prefix
+        elif labels and nums:
+            bin_nums = [bin(num)[2:] for num in nums]
+            labels_dict = dict(zip(labels, bin_nums))
 
-        labels_dict = dict(zip(self.labels, nums))
+        elif not labels and nums:
+            labels = []
+            for col in data.columns:
+                labels.extend(set(data[col].values))
+            labels = set(labels)
+            bin_nums = [bin(num)[2:] for num in nums]
+            labels_dict = dict(zip(labels, bin_nums))
+        else:
+            labels = []
+            for col in data.columns:
+                labels.extend(set(data[col].values))
+            labels = set(labels)
+            nums = [bin(i)[2:] for i in range(len(labels))]
+            labels_dict = dict(zip(labels, nums))
 
-        for col in self.data.columns:
-            temporary_col = self.data[col].values
-            mapped_labels = [labels_dict[value] for value in temporary_col]
+        for col in data.columns:
+
+            values = data[col].values
+            mapped_labels = [labels_dict[value] for value in values]
             labeled_data[col] = mapped_labels
 
         return pd.DataFrame(labeled_data)
 
+    def count_encoding(self, data):
+        """
+        Count Encoding: Replaces each category with its occurrence
+        count in the dataset. Captures category prevalence information.
 
-
-    def count_encoding(self):
+        :param data: Input DataFrame containing categorical data.
+        :return: DataFrame with count-encoded categorical data.
+        """
 
         labeled_data = {}
 
-        for col in self.data.columns:
+        for col in data.columns:
 
-            temporary_col = list(self.data[col].values)
-            labels = list(set(temporary_col))
+            values = list(data[col].values)
+            labels = set(values)
 
-            encoded_col = [temporary_col.count(label) for label in labels]
+            encoded_col = [(label, values.count(label)) for label in labels]
 
             labeled_data[col] = encoded_col
 
         return labeled_data
 
+    def mean_encoding(self, data, target=None):
+        """
+        Mean Encoding (Target Encoding): Replaces categories with the mean
+        of the target variable for that category. Captures feature-target relationship.
 
-
-
-    def target_encoding(self):
-
-        import numpy as np
-
-        encoded_data = {}
-
-        for col in self.data.columns:
-
-            temporary_dict = {}
-
-            temporary_col = list(self.data[col].values)
-            temporary_lst = [val for val in zip(temporary_col, self.target)]
-            labels = list(set(temporary_col))
-
-            for label in labels:
-
-                mean_value = np.mean([val[1] for val in temporary_lst if val[0] == label])
-
-                temporary_dict[label] = mean_value
-
-            encoded_data[col] = temporary_dict
-
-        return encoded_data
-
-
-
-
-    def frequency_encoding(self):
+        :param data: Input DataFrame containing categorical data.
+        :param target: Optional target variable for encoding.
+                       If not provided, unique target values from the data will be used.
+        :return: DataFrame with target-encoded categorical data.
+        """
+        if not target:
+            target = []
+            for col in data.columns:
+                target.extend(set(data[col].values))
+            target = list(set(target))
+            target = [i for i in range(len(target))]
 
         labeled_data = {}
 
-        for col in self.data.columns:
+        for col in data.columns:
 
-            temporary_col = list(self.data[col].values)
-            labels = list(set(temporary_col))
+            temp_dict = {}
 
-            encoded_col = [temporary_col.count(label)/len(temporary_col) for label in labels]
+            values = list(data[col].values)
+
+            temp_list = [value for value in zip(values, target)]
+
+            labels = list(set(values))
+
+            for label in labels:
+
+                mean_value = np.mean([value[1] for value in temp_list if value[0] == label])
+
+                temp_dict[label] = mean_value
+
+            labeled_data[col] = temp_dict
+
+        return labeled_data
+
+    def freq_encoding(self, data, r=2):
+        """
+        Frequency Encoding: Replaces categories with their frequency in the dataset.
+        Suitable for nominal categorical features.
+
+        :param data: Input DataFrame containing categorical data.
+        :param r: Number of decimal places to round the frequency values.
+        :return: DataFrame with frequency-encoded categorical data.
+        """
+
+        labeled_data = {}
+
+        for col in data.columns:
+
+            values = list(data[col].values)
+            labels = list(set(values))
+
+            encoded_col = [(label, round(values.count(label)/len(values)), r) for label in labels]
 
             labeled_data[col] = encoded_col
 
         return labeled_data
-
 
 
 

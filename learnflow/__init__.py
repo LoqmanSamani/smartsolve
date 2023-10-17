@@ -1,6 +1,6 @@
 
 # Import specific classes/modules from each submodule
-from .preprocessing import AnalyseData, SplitData, MissingValue, SelectFeature
+from .preprocessing import AnalyseData, SplitData, MissingValue, SelectFeature, CategoricalData, FeatureScaling
 from .models import LinearRegression, LogisticRegression, DecisionTree
 from .evaluation import Validation
 
@@ -18,6 +18,8 @@ __all__ = [
     "SplitData",
     "MissingValue",
     "SelectFeature",
+    "CategoricalData",
+    "FeatureScaling",
     "LinearRegression",
     "LogisticRegression",
     "Validation",
