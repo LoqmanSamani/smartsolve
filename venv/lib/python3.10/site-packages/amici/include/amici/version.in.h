@@ -1,6 +1,0 @@
-#ifndef AMICI_VERSION_H
-#define AMICI_VERSION_H
-
-#define AMICI_VERSION "@AMICI_VERSION@"
-
-#endif
