@@ -1,27 +1,23 @@
 import pandas as pd
-from logistic_regression import LogisticRegression
+from learnflow.models import LogisticRegression
 import numpy as np
 from sklearn.metrics import roc_curve, auc
 
 
-
-
-
 class Validation:
 
-
-    def accuracy(self, actual, predicted):
+    def accuracy(self, labels, predicted):
         """
         Calculate the accuracy of predicted labels.
 
-        :param actual: List of actual labels.
+        :param labels: List of actual labels.
         :param predicted: List of predicted labels.
         :return: Accuracy as a percentage.
         """
 
-        if len(actual) == len(predicted):
+        if len(labels) == len(predicted):
 
-            accurate = sum([1 if act == pred else 0 for act,pred in zip(actual, predicted)])
+            accurate = sum([1 if label == predict else 0 for label, predict in zip(labels, predicted)])
             accuracy = (accurate / len(predicted)) * 100
 
         else:
@@ -30,26 +26,22 @@ class Validation:
         return accuracy
 
 
-
-
-
-
-    def precision(self, actual, predicted):
+    def precision(self, labels, predicted):
         """
         Calculate precision for each label.
 
-        :param actual: List of actual labels.
+        :param labels: List of actual labels.
         :param predicted: List of predicted labels.
         :return: Dictionary of precision scores for each label.
         """
 
-        if len(actual) == len(predicted):
-            precision = {} # Dictionary to store precisions for each label
-            labels = list(set(predicted)) # all possible labels
+        if len(labels) == len(predicted):
+            precision = {}  # Dictionary to store precisions for each label
+            labels = list(set(predicted))  # all possible labels
 
             for label in labels:
 
-                true_positive = sum([1 if label == actual[j] and label == predicted[j] else 0 for j in range(len(actual))])
+                true_positive = sum([1 if label == labels[j] and label == predicted[j] else 0 for j in range(len(labels))])
                 total_positive = predicted.count(label)
                 accuracy = (true_positive / total_positive) * 100
                 precision[label] = accuracy
@@ -65,23 +57,23 @@ class Validation:
 
 
 
-    def recall(self, actual, predicted):
+    def recall(self, labels, predicted):
         """
         Calculate recall for each label.
 
-        :param actual: List of actual labels.
+        :param labels: List of actual labels.
         :param predicted: List of predicted labels.
         :return: Dictionary of recall scores for each label.
         """
 
-        if len(actual) == len(predicted):
+        if len(labels) == len(predicted):
             recall = {}  # Dictionary to store recalls for each label
             labels = list(set(predicted))  # all possible labels
 
             for label in labels:
 
-                true_positive = sum([1 if label == actual[j] and label == predicted[j] else 0 for j in range(len(actual))])
-                total_positive = actual.count(label)
+                true_positive = sum([1 if label == labels[j] and label == predicted[j] else 0 for j in range(len(labels))])
+                total_positive = labels.count(label)
                 accuracy = (true_positive / total_positive) * 100
                 recall[label] = accuracy
 
@@ -95,17 +87,17 @@ class Validation:
 
 
 
-    def f_score(self, actual, predicted, beta=None):
+    def f_score(self, labels, predicted, beta=None):
         """
         Calculate F1-score for each label.
 
-        :param actual: List of actual labels.
+        :param labels: List of actual labels.
         :param predicted: List of predicted labels.
         :param beta: Weighting factor for F-beta score.
         :return: Dictionary of F1-scores for each label.
         """
 
-        if len(actual) == len(predicted):
+        if len(labels) == len(predicted):
 
             f1_scores = {}
             f_beta_scores = {}
@@ -113,8 +105,8 @@ class Validation:
 
             for label in labels:
 
-                true_positive = sum(1 for a, p in zip(actual, predicted) if a == label and p == label)
-                r_total_positive = actual.count(label)
+                true_positive = sum(1 for a, p in zip(labels, predicted) if a == label and p == label)
+                r_total_positive = labels.count(label)
                 p_total_positive = predicted.count(label)
 
                 # Calculate precision and recall
@@ -139,11 +131,11 @@ class Validation:
 
 
 
-    def confusion_matrix(self, actual, predicted, positive_label=None):
+    def confusion_matrix(self, labels, predicted, positive_label=None):
         """
         Generate a confusion matrix.
 
-        :param actual: List of actual labels.
+        :param labels: List of actual labels.
         :param predicted: List of predicted labels.
         :param positive_label: Specify the positive label.
         :return: Pandas DataFrame representing the confusion matrix.
@@ -152,16 +144,16 @@ class Validation:
         if positive_label:
             p_label = positive_label
         else:
-            p_label = actual[0]
+            p_label = labels[0]
 
         num_p_label = predicted.count(p_label)
         num_n_label = len(predicted) - num_p_label
 
-        if len(actual) == len(predicted):
+        if len(labels) == len(predicted):
 
-            true_positive = sum(1 for a, p in zip(actual, predicted) if a == p_label and p == p_label)
+            true_positive = sum(1 for a, p in zip(labels, predicted) if a == p_label and p == p_label)
             false_positive = num_p_label - true_positive
-            true_negative = sum(1 for a, p in zip(actual, predicted) if a != p_label and p != p_label)
+            true_negative = sum(1 for a, p in zip(labels, predicted) if a != p_label and p != p_label)
             false_negative = num_n_label - true_negative
 
             confusion_matrix = pd.DataFrame({

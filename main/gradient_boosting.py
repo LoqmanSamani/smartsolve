@@ -442,12 +442,9 @@ class GradientBoosting:
 
             elif self.base_model == 'LinearRegression':
 
-                model = LinearRegression(training_data=self.training_data,
-                                         validation_data=self.validation_data,
-                                         intercept=self.lr_intercept,
-                                         algorithm=self.lr_algorithm,
-                                         num_parts=self.lr_num_parts
-                                         )
+                model = LinearRegression(train_data=self.training_data, val_data=self.validation_data,
+                                         intercept=self.lr_intercept, algorithm=self.lr_algorithm,
+                                         num_parts=self.lr_num_parts)
 
 
                 predicted = model.get_predictions()

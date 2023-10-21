@@ -74,7 +74,7 @@ class AnalyseData:
 
 
 
-    def heat_map(self, columns):
+    def heat_map(self, columns=None):
         """
         Create a heatmap to visualize the correlation between numeric columns.
 
@@ -82,7 +82,11 @@ class AnalyseData:
         :return: Matplotlib heatmap plot.
         """
         data = pd.read_csv(self.data)
-        data = data[columns]  # Extract specified columns
+        if columns:
+            data = data[columns]  # Extract specified columns
+        else:
+            data = data
+
         numeric_data = data.select_dtypes(include='number')
         heatmap = sns.heatmap(numeric_data.corr(), cmap='coolwarm', annot=True)
         plt.show()

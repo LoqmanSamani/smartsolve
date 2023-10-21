@@ -1,367 +1,301 @@
 import numpy as np
+import random
+import os
+import joblib
 
 
 class LinearRegression:
 
-    """
-    the training_data & validation_data must both have this structure:
-    list = [(y1,[x11,x12,...,x1n]),(y2,[x21,x22,x2n]),...,(ym,[xm1,xm2,...,xmn])]
-    """
-    def __init__(self, training_data, validation_data=None, intercept=0, algorithm ='GradientDescent', num_parts=10):
+    def __init__(self, train_data, coefficients=None, bias=None, algorithm='GD', learning_rate=0.01,
+                 max_iter=200,  threshold=1e-6, proportion=0.1, alpha=0.01):
+        """
+        Initialize a LinearRegression model.
 
-        self.training_data = training_data
-        self.validation_data = validation_data
-        self.intercept = intercept
+        Args:
+            train_data (list): List of training data points with the structure:
+                [(y1, [x11, x12, ..., x1n]), (y2, [x21, x22, x2n]), ..., (ym, [xm1, xm2, ..., xmn])]
+            coefficients (numpy.ndarray, optional): Initial coefficients for the model.
+            bias (float, optional): Initial bias for the model.
+            algorithm (str, optional): The training algorithm to use ('GD', 'SGD', 'MGD', 'NE', 'RR').
+            learning_rate (float, optional): Learning rate for gradient-based algorithms.
+            max_iter (int, optional): Maximum number of training iterations.
+            threshold (float, optional): Convergence threshold for stopping the training.
+            proportion (float, optional): Proportion of data used in each iteration (only for MGD algorithm).
+            alpha (float, optional): Regularization parameter for Ridge Regression ('RR').
+
+        Attributes:
+            train_data (list): The training data.
+            algorithm (str): The training algorithm.
+            learning_rate (float): The learning rate.
+            max_iter (int): Maximum number of iterations.
+            threshold (float): Convergence threshold.
+            proportion (float): Proportion of data used in each iteration.
+            alpha (float): Regularization parameter for Ridge Regression.
+            mse (list): List to store Mean Squared Error during training.
+            coefficients (numpy.ndarray): Coefficients for the linear regression model.
+            bias (float): Bias term for the linear regression model.
+        """
+
+        self.train_data = train_data
         self.algorithm = algorithm
-        self.num_parts = num_parts
+        self.learning_rate = learning_rate
+        self.max_iter = max_iter
+        self.threshold = threshold  # convergence threshold
+        self.proportion = proportion  # a proportion of data which will be used in each iteration using MGD algorithm
+        self.alpha = alpha
 
-        self.coefficients = None
-
-
-
-
-    def __call__(self):
-
-
-        if self.algorithm == 'GradientDescent':
-            return self.gradient_descent()
-
-
-        elif self.algorithm == 'StochasticGradientDescent':
-            return self.stochastic_gradient_descent()
-
-
-        elif self.algorithm == 'MiniBatchGradientDescent':
-            return self.mini_batch_gradient_descent()
-
-
-        elif self.algorithm == 'NormalEquation':
-            return self.normal_equation()
-
-
-        elif self.algorithm == 'RidgeRegression':
-            return self.ridge_regression()
-
-        else:
-            return ("Please provide a valid algorithm. Available options are: GradientDescent,"
-                    " StochasticGradientDescent, MiniBatchGradientDescent, NormalEquation and RidgeRegression.")
-
-
-
+        self.mse = []
+        self.coefficients = coefficients
+        self.bias = bias
 
     def train(self):
-        pass
+        """
+        Train the Linear Regression model using the specified algorithm.
 
-    def prediction(self):
+        If a pre-trained model is available, it loads the model instead of training.
 
-        import numpy as np
-        import random
+        Note: If a pre-trained model is not available, this method trains the model,
+        saves it to a file, and can later be loaded for inference.
+        """
 
-
-        if self.algorithm == 'GradientDescent':
-            features = np.array([item[1] for item in self.training_data])
-            coefficients = self.gradient_descent()
-            coefficients_row = coefficients.reshape(1, -1)
-            predicted = self.intercept + np.dot(coefficients_row, features.T)
-
-
-        elif self.algorithm == 'StochasticGradientDescent':
-
-            features = np.array([item[1] for item in self.training_data])
-            targets = np.array([item[0] for item in self.training_data])
-
-            coefficients = self.stochastic_gradient_descent()
-            coefficients_row = coefficients.reshape(1, -1)
-
-            maximum = len(targets) - 1
-            random_number = random.randint(0, maximum)
-
-            predicted = self.intercept + np.dot(coefficients_row, features[random_number].T)
-
-        elif self.algorithm == 'MiniBatchGradientDescent':
-
-
-            num_points = int(len(self.training_data) / self.num_parts)
-            index = [i * num_points for i in range(self.num_parts)]
-
-            data = [self.training_data[i:i + num_points] for i in index] # Split data into subsets
-
-            for subdata in data:
-
-                features = np.array([item[1] for item in subdata])
-                targets  = np.array([item[0] for item in subdata])
-
-                coefficients = self.mini_batch_gradient_descent()
-
-                coefficients_row = coefficients.reshape(1, -1)
-
-                predicted = self.intercept + np.dot(coefficients_row, features.T)
+        if os.path.exists("linear_regression_model.pkl"):
+            # Load the model from the file
+            with open("linear_regression_model.pkl", "rb") as model_file:
+                saved_model = joblib.load(model_file)
+                self.coefficients = saved_model.coefficients
+                self.bias = saved_model.bias
 
         else:
-            return "There is an issue with this try!!!"
+            algorithms = ['GD', 'SGD', 'MGD', 'NE', 'RR']
+            # Separate independent and dependent variables
+            features = np.array([item[1] for item in self.train_data])
+            labels = np.array([item[0] for item in self.train_data])
 
+            num_points, num_feats = features.shape
+            num_iter = 1  # tracks the number of iterations
+
+            if self.algorithm in algorithms:
+
+                if self.algorithm == 'NE':
+                    self.coefficients, self.bias = self.norm_equation(features=features, labels=labels)
+
+                elif self.algorithm == 'RR':
+                    self.coefficients, self.bias = self.ridge_regression(features=features, labels=labels, alpha=self.alpha)
+
+                else:
+                    # initialize weights and bias term
+                    if not self.coefficients:
+                        self.coefficients = np.full(shape=num_feats, fill_value=float(0))
+                    if not self.bias:
+                        self.bias = float(0)
+
+                    for _ in range(self.max_iter):
+
+                        predicted = self.predict(features=features, coefficients=self.coefficients, bias=self.bias)
+
+                        self.mse.append(self.mean_squared_error(predicted=predicted, labels=labels))
+
+                        pre_coefficients = self.coefficients
+                        pre_bias = self.bias
+
+                        if self.algorithm == 'GD':
+
+                            self.gradient_descent(
+                                features=features,
+                                labels=labels,
+                                predicted=predicted,
+                                num_points=num_points
+                            )
+
+                        elif self.algorithm == 'SGD':
+
+                            self.stoch_gradient_descent(
+                                features=features,
+                                labels=labels,
+                                predicted=predicted
+                            )
+
+                        elif self.algorithm == 'MGD':
+
+                            self.minibatch_gradient_descent(
+                                features=features,
+                                labels=labels,
+                                predicted=predicted
+                            )
+
+                        w_diffs = self.coefficients - pre_coefficients
+                        bias_diff = self.bias - pre_bias
+
+                        if all(w_diffs) < self.threshold and bias_diff < self.threshold:
+                            print(f"After {num_iter} iterations the model is trained!")
+                            break
+
+                        else:
+                            num_iter += 1
+
+            else:
+                raise ValueError("Please provide a valid algorithm. Available options are:"
+                                 "'GD', 'SGD', 'MGD', 'NE' and 'RR'.")
+
+            with open("linear_regression_model.pkl", "wb") as model_file:
+                joblib.dump(self, model_file)
+
+    def predict(self, features, coefficients, bias):
+        """
+        Make predictions using the trained Linear Regression model.
+
+        Args:
+            features (numpy.ndarray): Input features for prediction.
+            coefficients (numpy.ndarray): Coefficients for the model.
+            bias (float): Bias term for the model.
+
+        Returns:
+            numpy.ndarray: Predicted values.
+        """
+
+        predicted = np.dot(features, coefficients) + bias
 
         return predicted
 
-
-
-
-
-    def mean_squared_error(self):
+    def mean_squared_error(self, labels, predicted):
         """
-        Calculates MSE (Mean Squared Error):
-        MSE = (1/n) * sum((y_actual - y_predicted)^2)
-        where n is the number of data points, y_actual is the actual target value,
-        and y_predicted is the predicted value from the linear regression model.
+        Calculate Mean Squared Error (MSE) for model predictions.
+
+        Args:
+            labels (numpy.ndarray): Actual labels.
+            predicted (numpy.ndarray): Predicted values.
+
+        Returns:
+            float: Mean Squared Error (MSE).
         """
 
-        import numpy as np
-
-        targets = np.array([item[0] for item in self.training_data])
-
-        predicted = self.get_predictions()
-
-        mse = np.mean((targets - predicted)**2)
+        mse = np.mean(np.power(labels - predicted, 2))
 
         return mse
 
-
-
-
-
-
-
-    def prediction(self, features, coefficients):
-
-        predicted = np.dot(coefficients, features.T)
-        return predicted
-
-
-
-
-
-
-    def gradient_descent(self, learning_rate = 0.01, num_iterations = 100, initial_coefficients = 0, convergence_threshold=1e-6):
-
+    def gradient_descent(self, features, labels, predicted, num_points):
         """
-        Gradient Descent is an optimization algorithm for finding a local minimum
-        of a differentiable function. Gradient descent in machine learning is simply
-        used to find the values of a function's parameters (coefficients)
-        that minimize a cost function as far as possible.
-        """
-
-        import numpy as np
-
-        targets = np.array([item[0] for item in self.training_data])
-
-        coefficients = np.full(len(self.training_data[0][1]), initial_coefficients)
-
-        for i in range(num_iterations):
-
-            mse = self.mean_squared_error()
-
-            coefficients1 = [coefficient - (learning_rate * np.gradient(mse, coefficient)) for coefficient in coefficients]
-
-            coefficients_diff = np.linalg.norm(coefficients1 - coefficients)  # Calculate change in coefficients
-
-            if coefficients_diff < convergence_threshold:
-
-                print(f"Converged after {i + 1} iterations")
-
-                break
-
-            if self.validation_data:
-
-                validation_targets = np.array([item[0] for item in self.validation_data])
-                validation_features = np.array([item[1] for item in self.validation_data])
-
-                validation_predictions = self.predict(validation_features, coefficients)
-
-                validation_mse = np.mean((validation_targets - validation_predictions) ** 2)
-
-                print(f"Iteration {i + 1}: Validation MSE = {validation_mse}")
-
-
-            coefficients = coefficients1
-
-
-        return coefficients
-
-
-
-
-
-
-
-    def stochastic_gradient_descent(self, learning_rate = 0.01, num_iterations = 500, initial_coefficients = 0, convergence_threshold=1e-6):
-
-        import numpy as np
-
-        targets = np.array([item[0] for item in self.training_data])
-
-        coefficients = np.full(len(self.training_data[0][1]), initial_coefficients)
-
-        for i in range(num_iterations):
-
-            mse = self.mean_squared_error()
-
-            coefficients1 = [coefficient - (learning_rate * np.gradient(mse, coefficient)) for coefficient in coefficients]
-
-            coefficients_diff = np.linalg.norm(coefficients1 - coefficients)  # Calculate change in coefficients
-
-            if coefficients_diff < convergence_threshold:
-                print(f"Converged after {i + 1} iterations")
-
-                break
-
-            if self.validation_data:
-                validation_targets = np.array([item[0] for item in self.validation_data])
-                validation_features = np.array([item[1] for item in self.validation_data])
-
-                validation_predictions = self.predict(validation_features, coefficients)
-
-                validation_mse = np.mean((validation_targets - validation_predictions) ** 2)
-
-                print(f"Iteration {i + 1}: Validation MSE = {validation_mse}")
-
-            coefficients = coefficients1
-
-        return coefficients
-
-
-
-
-
-
-    def mini_batch_gradient_descent(self, learning_rate = 0.01, num_iterations = 200, initial_coefficients = 0, convergence_threshold=1e-6):
-
-        import numpy as np
-
-        targets = np.array([item[0] for item in self.training_data])
-
-        coefficients = np.full(len(self.training_data[0][1]), initial_coefficients)
-
-        for i in range(num_iterations):
-
-            mse = self.mean_squared_error()
-
-            coefficients1 = [coefficient - (learning_rate * np.gradient(mse, coefficient)) for coefficient in coefficients]
-
-            coefficients_diff = np.linalg.norm(coefficients1 - coefficients)  # Calculate change in coefficients
-
-            if coefficients_diff < convergence_threshold:
-                print(f"Converged after {i + 1} iterations")
-
-                break
-
-            if self.validation_data:
-                validation_targets = np.array([item[0] for item in self.validation_data])
-                validation_features = np.array([item[1] for item in self.validation_data])
-
-                validation_predictions = self.predict(validation_features, coefficients)
-
-                validation_mse = np.mean((validation_targets - validation_predictions) ** 2)
-
-                print(f"Iteration {i + 1}: Validation MSE = {validation_mse}")
-
-            coefficients = coefficients1
-
-        return coefficients
-
-
-
-
-
-
-
-    def normal_equation(self):
-
-        """
-        Calculates the optimal coefficients (β) using the
-        normal equation for linear regression.
-
-        The normal equation provides a direct way to find
-        the optimal coefficients:
-
-        β = (X^T * X)^-1 * X^T * y
-
-        This approach is particularly suitable for small
-        datasets with a relatively small number of features.
-
-        Returns:
-        coefficients (numpy.ndarray): An array of coefficients
-        (including the intercept) that minimize the mean squared error.
-    """
-
-        import numpy as np
-
-        targets = np.array([target[0] for target in self.training_data])
-        features = np.array([feature[1] for feature in self.training_data])
-
-        X = np.hstack((np.ones((len(features), 1)), features))  # Add a column of ones for the bias term
-
-        X_T_X_inverse = np.linalg.inv(np.dot(X.T, X))
-
-        X_T_y = np.dot(X.T, targets)
-
-        coefficients = np.dot(X_T_X_inverse, X_T_y)
-
-        return coefficients
-
-
-
-
-
-
-
-    def ridge_regression(self, alpha = 0.01):
-
-        """
-        Calculates the optimal coefficients (β) using the normal
-        equation for Ridge Regression.
-
-        Ridge Regression is a variant of linear regression that
-        adds a regularization term
-
-        to the normal equation to prevent overfitting:
-
-        β = (X^T * X + alpha * I)^-1 * X^T * y
-
-        where alpha is the regularization parameter
-        and I is the identity matrix.
-
-        This approach is particularly suitable when dealing
-        with multicollinearity or overfitting.
+        Perform a single step of Gradient Descent.
 
         Args:
-        alpha (float): The regularization parameter
-        controlling the strength of regularization.
+            features (numpy.ndarray): Input features.
+            labels (numpy.ndarray): Actual labels.
+            predicted (numpy.ndarray): Predicted values.
+            num_points (int): Number of data points.
 
-        Returns:
-        coefficients (numpy.ndarray): An array of coefficients
-        (including the intercept) that minimize the mean
-        squared error with Ridge regularization.
+        Updates:
+            The model's coefficients and bias based on the gradient descent step.
+        """
+        d_coefficients = (1/num_points) * np.dot(features.T, (predicted - labels))
+        d_bias = (1/num_points) * np.sum(predicted - labels)
+
+        self.coefficients -= d_coefficients * self.learning_rate
+        self.bias -= d_bias * self.learning_rate
+
+    def stoch_gradient_descent(self, features, labels, predicted):
+        """
+        Perform a single step of Stochastic Gradient Descent.
+
+        Args:
+            features (numpy.ndarray): Input features.
+            labels (numpy.ndarray): Actual labels.
+            predicted (numpy.ndarray): Predicted values.
+
+        Updates:
+            The model's coefficients and bias based on the stochastic gradient descent step.
         """
 
-        import numpy as np
+        #  Choose one point to do the calculation
+        index = random.choice([i for i in range(len(features))])
+        point = np.array([features[index, :]])
+        predict = predicted[index]
+        label = labels[index]
 
-        targets = np.array([target[0] for target in self.training_data])
-        features = np.array([feature[1] for feature in self.training_data])
+        d_coefficients = np.dot(point.T, predict - label) * self.learning_rate
+        d_bias = predict - label
 
-        X = np.hstack((np.ones((len(features), 1)), features))  # Add a column of ones for the bias term
+        self.coefficients -= d_coefficients * self.learning_rate
+        self.bias -= d_bias * self.learning_rate
 
-        identity_matrix = np.eye(X.shape[1])  # Identity matrix with the same number of columns as X
+    def minibatch_gradient_descent(self, features, labels, predicted):
+        """
+        Perform a single step of Mini-Batch Gradient Descent.
 
-        X_T_X_regularized_inverse = np.linalg.inv(np.dot(X.T, X) + alpha * identity_matrix)
+        Args:
+            features (numpy.ndarray): Input features.
+            labels (numpy.ndarray): Actual labels.
+            predicted (numpy.ndarray): Predicted values.
 
-        X_T_y = np.dot(X.T, targets)
+        Updates:
+            The model's coefficients and bias based on the mini-batch gradient descent step.
+        """
 
-        coefficients = np.dot(X_T_X_regularized_inverse, X_T_y)
+        #  Choose a proportion of data to do the calculation
+        num_points = int(len(features) * self.proportion)
+        start_index = random.choice([i for i in range(len(features) - num_points)])
+        stop_index = start_index + num_points
+        points = np.array(features[start_index:stop_index, :])
+        p_labels = np.array(labels[start_index:stop_index])
+        p_predicted = np.array(predicted[start_index:stop_index])
 
-        X_T_X_inverse = np.linalg.inv(np.dot(X.T, X))
+        d_coefficients = np.dot(points.T, p_predicted - p_labels) * self.learning_rate
+        d_bias = p_predicted - p_labels
 
+        self.coefficients -= d_coefficients * self.learning_rate
+        self.bias -= d_bias * self.learning_rate
 
-        return coefficients
+    def norm_equation(self, features, labels):
+
+        """
+        Calculate coefficients using the Normal Equation.
+
+        Args:
+            features (numpy.ndarray): Input features.
+            labels (numpy.ndarray): Actual labels.
+
+        Returns:
+            tuple: Tuple containing the coefficients (numpy.ndarray) and bias (float).
+        """
+        if self.bias:
+            x = np.hstack((np.ones((len(features), self.bias)), features))  # Add a column of bias for the bias term
+            bias = self.bias
+        else:
+            x = np.hstack((np.ones((len(features), 1)), features))  # Add a column of bias for the bias term
+            bias = 1
+
+        x_t_x_inverse = np.linalg.inv(np.dot(x.T, x))
+        x_t_y = np.dot(x.T, labels)
+
+        coefficients = np.dot(x_t_x_inverse, x_t_y)
+
+        return coefficients, bias
+
+    def ridge_regression(self, features, labels, alpha):
+
+        """
+        Calculate coefficients using Ridge Regression.
+
+        Args:
+            features (numpy.ndarray): Input features.
+            labels (numpy.ndarray): Actual labels.
+            alpha (float): Regularization parameter.
+
+        Returns:
+            tuple: Tuple containing the coefficients (numpy.ndarray) and bias (float).
+        """
+        if self.bias:
+            x = np.hstack((np.ones((len(features), self.bias)), features))  # Add a column of bias for the bias term
+            bias = self.bias
+        else:
+            x = np.hstack((np.ones((len(features), 1)), features))  # Add a column of bias for the bias term
+            bias = 1
+
+        identity_matrix = np.eye(x.shape[1])  # Identity matrix with the same number of columns as X
+        x_t_x_regularized_inverse = np.linalg.inv(np.dot(x.T, x) + alpha * identity_matrix)
+        x_t_y = np.dot(x.T, labels)
+        coefficients = np.dot(x_t_x_regularized_inverse, x_t_y)
+
+        return coefficients, bias
 
 
 
