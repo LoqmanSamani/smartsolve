@@ -2,11 +2,12 @@ import numpy as np
 import random
 import os
 import joblib
+import sys
 
 
 class LinearRegression:
 
-    def __init__(self, train_data, coefficients=None, bias=None, algorithm='GD', learning_rate=0.01,
+    def __init__(self, train_data, coefficients=None, bias=None, algorithm='GD', learning_rate=1e-4,
                  max_iter=200,  threshold=1e-6, proportion=0.1, alpha=0.01):
         """
         Initialize a LinearRegression model.
@@ -46,7 +47,7 @@ class LinearRegression:
 
         self.mse = []
         self.coefficients = coefficients
-        self.bias = bias
+        self.bias = bias  # regularization parameter used in ridge regression
 
     def train(self):
         """
@@ -189,8 +190,8 @@ class LinearRegression:
         d_coefficients = (1/num_points) * np.dot(features.T, (predicted - labels))
         d_bias = (1/num_points) * np.sum(predicted - labels)
 
-        self.coefficients -= d_coefficients * self.learning_rate
-        self.bias -= d_bias * self.learning_rate
+        self.coefficients -= self.learning_rate * d_coefficients
+        self.bias -= self.learning_rate * d_bias
 
     def stoch_gradient_descent(self, features, labels, predicted):
         """
@@ -204,18 +205,19 @@ class LinearRegression:
         Updates:
             The model's coefficients and bias based on the stochastic gradient descent step.
         """
-
-        #  Choose one point to do the calculation
-        index = random.choice([i for i in range(len(features))])
+        # Randomly choose one data point for the update
+        index = random.choice(range(len(features)))
         point = np.array([features[index, :]])
         predict = predicted[index]
         label = labels[index]
 
-        d_coefficients = np.dot(point.T, predict - label) * self.learning_rate
-        d_bias = predict - label
+        # Update coefficients
+        update_coefficients = np.dot(point.T, predict - label) * self.learning_rate
+        self.coefficients -= update_coefficients
 
-        self.coefficients -= d_coefficients * self.learning_rate
-        self.bias -= d_bias * self.learning_rate
+        # Update bias
+        update_bias = (predict - label) * self.learning_rate
+        self.bias -= update_bias
 
     def minibatch_gradient_descent(self, features, labels, predicted):
         """
@@ -229,23 +231,25 @@ class LinearRegression:
         Updates:
             The model's coefficients and bias based on the mini-batch gradient descent step.
         """
-
-        #  Choose a proportion of data to do the calculation
+        # Choose a proportion of data to do the calculation
         num_points = int(len(features) * self.proportion)
-        start_index = random.choice([i for i in range(len(features) - num_points)])
+
+        start_index = random.choice(range(len(features) - num_points))
         stop_index = start_index + num_points
-        points = np.array(features[start_index:stop_index, :])
-        p_labels = np.array(labels[start_index:stop_index])
-        p_predicted = np.array(predicted[start_index:stop_index])
 
-        d_coefficients = np.dot(points.T, p_predicted - p_labels) * self.learning_rate
-        d_bias = p_predicted - p_labels
+        points = features[start_index:stop_index, :]
+        p_labels = labels[start_index:stop_index]
+        p_predicted = predicted[start_index:stop_index]
 
-        self.coefficients -= d_coefficients * self.learning_rate
-        self.bias -= d_bias * self.learning_rate
+        # Calculate the gradients for the mini-batch
+        d_coefficients = np.dot(points.T, p_predicted - p_labels) / num_points
+        d_bias = np.mean(p_predicted - p_labels)
+
+        # Update coefficients and bias
+        self.coefficients -= d_coefficients
+        self.bias -= d_bias
 
     def norm_equation(self, features, labels):
-
         """
         Calculate coefficients using the Normal Equation.
 
@@ -256,17 +260,22 @@ class LinearRegression:
         Returns:
             tuple: Tuple containing the coefficients (numpy.ndarray) and bias (float).
         """
-        if self.bias:
-            x = np.hstack((np.ones((len(features), self.bias)), features))  # Add a column of bias for the bias term
+        if self.bias is not None:
+            # Add a column of ones for the bias term
+            x = np.hstack((np.ones((len(features), 1)), features))
             bias = self.bias
         else:
-            x = np.hstack((np.ones((len(features), 1)), features))  # Add a column of bias for the bias term
-            bias = 1
+            # No bias term
+            x = features
+            bias = 0
 
-        x_t_x_inverse = np.linalg.inv(np.dot(x.T, x))
-        x_t_y = np.dot(x.T, labels)
-
-        coefficients = np.dot(x_t_x_inverse, x_t_y)
+        if np.linalg.cond(x) < 1 / sys.float_info.epsilon:
+            x_t_x_inverse = np.linalg.inv(np.dot(x.T, x))
+            x_t_y = np.dot(x.T, labels)
+            coefficients = np.dot(x_t_x_inverse, x_t_y)
+        else:
+            raise ValueError("The matrix provided in this calculation is not reversible,"
+                             " please choose another method to train your model!")
 
         return coefficients, bias
 
