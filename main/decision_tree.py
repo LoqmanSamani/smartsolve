@@ -1,3 +1,5 @@
+import numpy as np
+
 
 class DecisionTree:
 
@@ -6,263 +8,207 @@ class DecisionTree:
     list = [(y1,[x11,x12,...,x1n]),(y2,[x21,x22,x2n]),...,(ym,[xm1,xm2,...,xmn])]
     """
 
-    def __init__(self, training_data, validation_data=None, feature_subsets, impurity_threshold=None):
+    def __init__(self, data, min_points=2, max_depth=2, curr_depth=0, algorithm='gini'):
 
-        self.training_data = training_data
-        self.validation_data = validation_data
-        self.feature_subsets = feature_subsets # a dictionary contains all features and diversity of them for example: dict = {feature1:[1,2,3], feature2:[1,2,3,4], ...}
-        self.impurity_threshold = impurity_threshold
-        self.tree = None  # Placeholder for the decision tree structure
+        self.data = data
+        self.min_points = min_points  # minimum number of points (samples) in data to split
+        self.max_depth = max_depth
+        self.curr_depth = curr_depth
+        self.algorithm = algorithm
 
+        self.root = None
 
+    def train(self):
+        self.root = self.build_tree(data=self.data, curr_depth=self.curr_depth)
 
-    def gini_impurity(self, features):
+    def build_tree(self, data, curr_depth):
+
+        features = np.array([point[-1] for point in data])
+        labels = np.array([point[0] for point in data])
+
+        num_points = len(list(features))
+        num_features = features.shape[1]
+
+        if num_points >= self.min_points and curr_depth <= self.max_depth:
+
+            best_split = self.best_split(
+                features=features,
+                num_points=num_points,
+                num_features=num_features
+            )
+
+            if best_split['info_gain'] > 0:
+
+                left_subtree = self.build_tree(
+                    data=best_split['dataset_left'],
+                    curr_depth=self.curr_depth + 1
+                )
 
-        import numpy as np
+                right_subtree = self.build_tree(
+                    data=best_split['dataset_right'],
+                    curr_depth=self.curr_depth + 1
+                )
+
+                return DecisionTreeNode(
+                    feature_index=best_split['feature_index'],
+                    threshold=best_split['threshold'],
+                    left=left_subtree,
+                    right=right_subtree,
+                    info_gain=best_split['info_gain']
+                )
 
-        len_data = np.sum([len(subfeature) for subfeature in features[0]])
+        left_value = self.left_value(labels=labels)
 
-        gini_imps = []
+        return DecisionTreeNode(value=left_value)
 
-        for feature in features:
+    def best_split(self, features, num_points, num_features):
 
-            gini_imp = 1 - np.sum([np.power((len(sub_feature) / len_data), 2) for subfeature in feature])
+        best_split = {}
+        max_info_gain = -float('inf')
 
-            gini_imps.append(gini_imp)
+        for i in range(num_features):
+            feature_vals = features[:, i]
+            poss_thresholds = np.unique(feature_vals)
 
-        best_f_to_split_on = np.min(gini_imps)
+            for t in poss_thresholds:
 
+                dataset_left, dataset_right = self.split(
+                    features=features,
+                    index=i,
+                    threshold=t
+                )
 
-        return best_f_to_split_on
+                if len(dataset_left) > 0 and len(dataset_right) > 0:
+                    labels, l_labels, r_labels = (
+                        np.array([point[-1] for point in features]),
+                        np.array([point[-1] for point in dataset_left]),
+                        np.array([point[-1] for point in dataset_right])
+                    )
 
+                    curr_info_gain = self.info_gain(
+                        parent=labels,
+                        left_child=l_labels,
+                        right_child=r_labels,
+                        algorithm=self.algorithm
+                    )
 
+                    if float(curr_info_gain) > max_info_gain:
+                        best_split['feature_index'] = i
+                        best_split['threshold'] = t
+                        best_split['dataset_left'] = dataset_left
+                        best_split['dataset_right'] = dataset_right
+                        best_split['info_gain'] = curr_info_gain
+                        max_info_gain = curr_info_gain
 
-
-    def child_node_impurities(self, features):
-
-        import numpy as np
-
-        len_data = np.sum([len(subfeature) for subfeature in features[0]])
-
-        gini_imps = []
-
-        for feature in features:
-
-            gini_imp = 1 - np.sum([np.power((len(sub_feature) / len_data), 2) for subfeature in feature])
-
-            gini_imps.append(gini_imp)
-
-
-        return gini_imps
-
-
-
-
-    def parent_impurity(self, feature):
-
-        import numpy as np
-
-        len_data = np.sum([len(subfeature) for subfeature in feature[0]])
-
-        gini_imp = 1 - np.sum([np.power((len(subfeature) / len_data), 2) for subfeature in feature])
-
-
-        return gini_imp
-
-
-
-
-
-
-
-
-    def data_splitting(self, data):
-
-        import numpy as np
-
-        features = [] # a list of all features, each feature contains sublists of all categories in the feature.
-
-        for i in range(len(self.feature_subsets)):  # number of features
-
-            feature = []
-
-            for value in self.feature_subsets.values():  # each feature
-
-                subfeature = []
-
-                for item in value:
-
-                    for point in data:
-
-                        if item == point[1][i]:
-
-                            subfeature.append(point)
-
-                feature.append(subfeature)
-
-            features.append(feature)
-
-        parent_impurity_val = self.parent_impurity(data)
-
-        child_node_impurities = self.child_node_impurities(features)
-
-        childs = self.data_splitting(features)
-
-        weighted_child_node_impurities = np.mean([len(child) / len(data) for child in childs])
-
-        impurity_reduction = parent_impurity_val - weighted_child_node_impurities
-
-
-
-        return childs
-
-
-
-
-
-    def get_most_common_class(self, data):
-
-        from collections import Counter
-
-        class_labels = [point[0] for point in data]
-
-        class_counts = Counter(class_labels)
-
-        most_common_class = class_counts.most_common(1)[0][0]
-
-
-        return most_common_class
-
-
-
-
-
-
-    def get_best_feature_to_split_on(self, features):
-
-        import numpy as np
-
-        len_data = np.sum([len(subfeature) for subfeature in features[0]])
-
-        gini_imps = []
-
-        for feature in features:
-
-            gini_imp = 1 - np.sum([np.power((len(sub_feature) / len_data), 2) for subfeature in feature])
-
-            gini_imps.append(gini_imp)
-
-
-        best_f_to_split_on = np.min(gini_imps)
-
-
-        return best_f_to_split_on
-
-
-
-
-
-
-    def tree_building(self, data=None):
-
-        if data is None:
-
-            data = self.training_data
-
-        if self.impurity_threshold is not None:
-
-            parent_impurity_val = self.parent_impurity(data)
-
-            if parent_impurity_val <= self.impurity_threshold:
-
-                # Create a leaf node with the most common class label
-                most_common_class = self.get_most_common_class(data)
-
-
-                return DecisionTreeNode(class_label=most_common_class)
-
-
-        splited_data = self.data_splitting(data)
-
-        if not splited_data:  # If no further split can be done
-
-            most_common_class = self.get_most_common_class(data)
-
-
-            return DecisionTreeNode(class_label=most_common_class)
-
-        feature_idx_to_split_on = self.get_best_feature_to_split_on(splited_data)
-
-        feature_subsets = self.feature_subsets[feature_idx_to_split_on]
-
-        node = DecisionTreeNode(feature_idx=feature_idx_to_split_on)
-
-        for value in feature_subsets:
-
-            child_data = [point for point in data if point[1][feature_idx_to_split_on] == value]
-
-            child_tree = self.tree_building(child_data)
-
-            node.add_child(value, child_tree)  # Add child node to the current node
-
-
-        return node
-
-
-
-
-    def fit(self):
-
-        self.tree = self.tree_building()
-
-        return self.tree  # Return the trained tree
-
-
-
-
+        return best_split
+
+    def split(self, features, index, threshold):
+
+        dataset_left = np.array([point for point in features if point[index] <= threshold])
+        dataset_right = np.array([point for point in features if point[index] > threshold])
+        return dataset_left, dataset_right
+
+    def info_gain(self, parent, left_child, right_child, algorithm='entropy'):
+
+        l_weight = len(left_child) / len(parent)
+        r_weight = len(right_child) / len(parent)
+
+        if algorithm == 'gini':
+            gain = self.gini_impurity(
+                parent=parent,
+                left_child=left_child,
+                right_child=right_child,
+                left_weight=l_weight,
+                right_weight=r_weight
+            )
+        else:
+            gain = self.cal_entropy(
+                parent=parent,
+                left_child=left_child,
+                right_child=right_child,
+                left_weight=l_weight,
+                right_weight=r_weight
+            )
+        return gain
+
+    def gini_impurity(self, parent, left_child, right_child, left_weight, right_weight):
+
+        p_gini = self.gini_index(labels=parent)
+        l_gini = self.gini_index(labels=left_child) * left_weight
+        r_gini = self.gini_index(labels=right_child) * right_weight
+
+        gain = p_gini - (l_gini + r_gini)
+
+        return gain
+
+    def gini_index(self, labels):
+
+        class_labels = np.unique(labels)
+        gini = 0
+        for label in class_labels:
+            p_label = len(labels[labels == label]) / len(labels)
+            gini += np.power(p_label, 2)
+
+        return 1 - gini
+
+    def cal_entropy(self, parent, left_child, right_child, left_weight, right_weight):
+
+        p_entropy = self.entropy(labels=parent)
+        l_entropy = self.entropy(labels=left_child) * left_weight
+        r_entropy = self.entropy(labels=right_child) * right_weight
+
+        entropy = p_entropy - (l_entropy + r_entropy)
+
+        return entropy
+
+    def entropy(self, labels):
+
+        class_labels = np.unique(labels)
+        entropy = 0
+
+        for label in class_labels:
+
+            p_label = len(labels[labels == label]) / len(labels)
+            entropy += - p_label * np.log2(p_label)
+
+        return entropy
+
+    def left_value(self, labels):
+        labels = list(labels)
+        return max(labels, key=labels.count)
+
+    def tree(self, tree=None, indent=" "):
+        if not tree:
+            tree = self.root
+        if tree.value is not None:
+            print(tree.value)
+        else:
+            print('X_' + str(tree.feature_index), '<=', tree.threshold, '?', tree.info_gain)
+            print('%sleft:' % (indent), end='')
+            self.tree(tree.left, indent + indent)
+            print('%sright' % (indent), end='')
+            self.tree(tree.right, indent + indent)
+
+    def predict(self, data):
+        prediction = [self.make_prediction(point=point, tree=self.root) for point in data]
+        return prediction
+
+    def make_prediction(self, point, tree):
+        if tree.value:
+            return tree.value
+        feature_val = point[tree.feature_index]
+        if feature_val <= tree.threshold:
+            return self.make_prediction(point=point, tree=tree.left)
+        else:
+            return self.make_prediction(point=point, tree=tree.right)
 
 
 class DecisionTreeNode:
-
-
-    def __init__(self, class_label=None, feature_idx=None):
-        self.class_label = class_label  # Class label for leaf nodes
-        self.feature_idx = feature_idx  # Index of the feature to split on for non-leaf nodes
-        self.children = {}  # Dictionary to hold child nodes
-
-    def add_child(self, value, child_node):
-
-        self.children[value] = child_node
-
-
-    def is_leaf(self):
-
-        return self.class_label is not None
-
-
-
-
-    def predict(self, sample):
-
-        if self.is_leaf():
-
-            return self.class_label
-
-        value = sample[self.feature_idx]
-
-        if value in self.children:
-
-            child_node = self.children[value]
-
-            return child_node.predict(sample)
-
-        else:
-
-            return 'There is an issue!!!'
-
-
-
-
-
-
+    def __init__(self, feature_index=None, threshold=None, left=None, right=None, info_gain=None, value=None):
+        self.feature_index = feature_index
+        self.threshold = threshold
+        self.left = left
+        self.right = right
+        self.info_gain = info_gain
+        self.value = value
 
