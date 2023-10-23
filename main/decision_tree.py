@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class DecisionTree:
 
     """
@@ -184,9 +183,9 @@ class DecisionTree:
             print(tree.value)
         else:
             print('X_' + str(tree.feature_index), '<=', tree.threshold, '?', tree.info_gain)
-            print('%sleft:' % (indent), end='')
+            print('%sleft:' % indent, end='')
             self.tree(tree.left, indent + indent)
-            print('%sright' % (indent), end='')
+            print('%sright' % indent, end='')
             self.tree(tree.right, indent + indent)
 
     def predict(self, data):
@@ -211,4 +210,6 @@ class DecisionTreeNode:
         self.right = right
         self.info_gain = info_gain
         self.value = value
+
+
 

@@ -643,11 +643,38 @@ class LogisticRegression:
 
 
 
-class DecisionTree:
 
+
+class DecisionTree:
     """
-    the training_data & validation_data must both have this structure:
-    list = [(y1,[x11,x12,...,x1n]),(y2,[x21,x22,x2n]),...,(ym,[xm1,xm2,...,xmn])]
+    Decision Tree classifier.
+
+    Args:
+        data (list): A list of tuples where each tuple contains the label (y) as the first element
+            and a list of features (x1, x2, ..., xn) as the second element.
+        min_points (int): Minimum number of data points required to split a node.
+        max_depth (int): Maximum depth of the decision tree.
+        curr_depth (int): Current depth during tree construction.
+        algorithm (str): The impurity measure for node splitting. Supported values are 'gini' (default) and 'entropy'.
+
+    Attributes:
+        root (DecisionTreeNode): The root node of the decision tree.
+
+    Methods:
+        train(): Build the decision tree using the provided training data.
+        build_tree(data, curr_depth): Recursively construct the decision tree.
+        best_split(features, num_points, num_features): Find the best feature and threshold to split the data.
+        split(features, index, threshold): Split the data into left and right datasets.
+        info_gain(parent, left_child, right_child, algorithm): Calculate information gain using specified impurity measure.
+        gini_impurity(parent, left_child, right_child, left_weight, right_weight): Calculate Gini impurity.
+        gini_index(labels): Calculate the Gini index for a set of labels.
+        cal_entropy(parent, left_child, right_child, left_weight, right_weight): Calculate entropy.
+        entropy(labels): Calculate entropy for a set of labels.
+        left_value(labels): Determine the most common label in a node.
+        tree(tree, indent): Display the decision tree structure.
+        predict(data): Make predictions on new data points.
+        make_prediction(point, tree): Recursively navigate the decision tree to make predictions.
+
     """
 
     def __init__(self, data, min_points=2, max_depth=2, curr_depth=0, algorithm='gini'):
@@ -661,9 +688,24 @@ class DecisionTree:
         self.root = None
 
     def train(self):
+        """
+        Build the decision tree using the provided training data.
+        """
+
         self.root = self.build_tree(data=self.data, curr_depth=self.curr_depth)
 
     def build_tree(self, data, curr_depth):
+        """
+        Recursively construct the decision tree.
+
+        Args:
+            data (list): Training data for the current node.
+            curr_depth (int): Current depth during tree construction.
+
+        Returns:
+            DecisionTreeNode: The root node of the subtree.
+
+        """
 
         features = np.array([point[-1] for point in data])
         labels = np.array([point[0] for point in data])
@@ -704,6 +746,18 @@ class DecisionTree:
         return DecisionTreeNode(value=left_value)
 
     def best_split(self, features, num_points, num_features):
+        """
+        Find the best feature and threshold to split the data.
+
+        Args:
+            features (numpy.ndarray): Features of the training data.
+            num_points (int): Number of data points.
+            num_features (int): Number of features.
+
+        Returns:
+            dict: A dictionary containing the best split information.
+
+        """
 
         best_split = {}
         max_info_gain = -float('inf')
@@ -846,6 +900,18 @@ class DecisionTree:
 
 
 class DecisionTreeNode:
+    """
+    Node for the Decision Tree.
+
+    Args:
+        feature_index (int): Index of the feature used for splitting this node.
+        threshold (float): Threshold value for splitting.
+        left (DecisionTreeNode): The left subtree.
+        right (DecisionTreeNode): The right subtree.
+        info_gain (float): Information gain associated with the split.
+        value: Predicted label if this is a leaf node.
+
+    """
     def __init__(self, feature_index=None, threshold=None, left=None, right=None, info_gain=None, value=None):
         self.feature_index = feature_index
         self.threshold = threshold
@@ -855,3 +921,5 @@ class DecisionTreeNode:
         self.value = value
 
 
+class KMeansClustering:
+    pass

@@ -1,7 +1,7 @@
 
 # Import specific classes/modules from each submodule
 from .preprocessing import AnalyseData, SplitData, MissingValue, SelectFeature, CategoricalData, FeatureScaling
-from .models import LinearRegression, LogisticRegression, DecisionTree
+from .models import LinearRegression, LogisticRegression, DecisionTree, KMeansClustering
 from .evaluation import Validation
 
 
@@ -24,6 +24,7 @@ __all__ = [
     "LogisticRegression",
     "Validation",
     "DecisionTree",
+    "KMeansClustering",
     "PACKAGE_VERSION",
     "DEFAULT_CONFIG",
 ]
