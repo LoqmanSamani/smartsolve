@@ -1,215 +1,231 @@
 import numpy as np
+from collections import Counter
+
 
 class DecisionTree:
-
     """
-    the training_data & validation_data must both have this structure:
-    list = [(y1,[x11,x12,...,x1n]),(y2,[x21,x22,x2n]),...,(ym,[xm1,xm2,...,xmn])]
+    A Decision Tree classifier for binary classification problems.
+
+    :param train_data: The training data.
+    :param min_points: The minimum number of data points required to split a node (default is 2).
+    :param max_depth: The maximum depth of the decision tree (default is 10).
+    :param num_features: The number of random features to consider for each split (default is None).
+    :param curr_depth: The current depth of the tree while building (default is 0).
     """
 
-    def __init__(self, data, min_points=2, max_depth=2, curr_depth=0, algorithm='gini'):
+    def __init__(self, train_data, min_points=2, max_depth=10, num_features=None, curr_depth=0):
 
-        self.data = data
-        self.min_points = min_points  # minimum number of points (samples) in data to split
+        self.train_data = train_data
+        self.min_points = min_points
         self.max_depth = max_depth
+        self.num_features = num_features
         self.curr_depth = curr_depth
-        self.algorithm = algorithm
 
         self.root = None
 
     def train(self):
-        self.root = self.build_tree(data=self.data, curr_depth=self.curr_depth)
-
-    def build_tree(self, data, curr_depth):
-
-        features = np.array([point[-1] for point in data])
-        labels = np.array([point[0] for point in data])
-
-        num_points = len(list(features))
-        num_features = features.shape[1]
-
-        if num_points >= self.min_points and curr_depth <= self.max_depth:
-
-            best_split = self.best_split(
-                features=features,
-                num_points=num_points,
-                num_features=num_features
-            )
-
-            if best_split['info_gain'] > 0:
-
-                left_subtree = self.build_tree(
-                    data=best_split['dataset_left'],
-                    curr_depth=self.curr_depth + 1
-                )
-
-                right_subtree = self.build_tree(
-                    data=best_split['dataset_right'],
-                    curr_depth=self.curr_depth + 1
-                )
-
-                return DecisionTreeNode(
-                    feature_index=best_split['feature_index'],
-                    threshold=best_split['threshold'],
-                    left=left_subtree,
-                    right=right_subtree,
-                    info_gain=best_split['info_gain']
-                )
-
-        left_value = self.left_value(labels=labels)
-
-        return DecisionTreeNode(value=left_value)
-
-    def best_split(self, features, num_points, num_features):
-
-        best_split = {}
-        max_info_gain = -float('inf')
-
-        for i in range(num_features):
-            feature_vals = features[:, i]
-            poss_thresholds = np.unique(feature_vals)
-
-            for t in poss_thresholds:
-
-                dataset_left, dataset_right = self.split(
-                    features=features,
-                    index=i,
-                    threshold=t
-                )
-
-                if len(dataset_left) > 0 and len(dataset_right) > 0:
-                    labels, l_labels, r_labels = (
-                        np.array([point[-1] for point in features]),
-                        np.array([point[-1] for point in dataset_left]),
-                        np.array([point[-1] for point in dataset_right])
-                    )
-
-                    curr_info_gain = self.info_gain(
-                        parent=labels,
-                        left_child=l_labels,
-                        right_child=r_labels,
-                        algorithm=self.algorithm
-                    )
-
-                    if float(curr_info_gain) > max_info_gain:
-                        best_split['feature_index'] = i
-                        best_split['threshold'] = t
-                        best_split['dataset_left'] = dataset_left
-                        best_split['dataset_right'] = dataset_right
-                        best_split['info_gain'] = curr_info_gain
-                        max_info_gain = curr_info_gain
-
-        return best_split
-
-    def split(self, features, index, threshold):
-
-        dataset_left = np.array([point for point in features if point[index] <= threshold])
-        dataset_right = np.array([point for point in features if point[index] > threshold])
-        return dataset_left, dataset_right
-
-    def info_gain(self, parent, left_child, right_child, algorithm='entropy'):
-
-        l_weight = len(left_child) / len(parent)
-        r_weight = len(right_child) / len(parent)
-
-        if algorithm == 'gini':
-            gain = self.gini_impurity(
-                parent=parent,
-                left_child=left_child,
-                right_child=right_child,
-                left_weight=l_weight,
-                right_weight=r_weight
-            )
+        """
+        Train the decision tree on the provided training data.
+        """
+        features = np.array([point[1] for point in self.train_data])
+        labels = np.array([point[0] for point in self.train_data])
+        if not self.num_features:
+            self.num_features = features.shape[1]
         else:
-            gain = self.cal_entropy(
-                parent=parent,
-                left_child=left_child,
-                right_child=right_child,
-                left_weight=l_weight,
-                right_weight=r_weight
-            )
-        return gain
+            self.num_features = min(features.shape[1], self.num_features)
 
-    def gini_impurity(self, parent, left_child, right_child, left_weight, right_weight):
+        self.root = self.tree(
+            features=features,
+            labels=labels,
+            curr_depth=self.curr_depth
+        )
 
-        p_gini = self.gini_index(labels=parent)
-        l_gini = self.gini_index(labels=left_child) * left_weight
-        r_gini = self.gini_index(labels=right_child) * right_weight
+    def tree(self, features, labels, curr_depth):
+        """
+        Recursively build the decision tree.
 
-        gain = p_gini - (l_gini + r_gini)
+        :param features: The features of the data.
+        :param labels: The labels of the data.
+        :param curr_depth: The current depth in the tree.
+        :return: The root node of the decision tree.
+        """
 
-        return gain
+        num_points, num_features = features.shape
+        num_labels = len(np.unique(labels))
 
-    def gini_index(self, labels):
+        if curr_depth >= self.max_depth or num_labels == 1 or num_points < self.min_points:
+            leaf_value = self.best_label(labels=labels)
 
-        class_labels = np.unique(labels)
-        gini = 0
-        for label in class_labels:
-            p_label = len(labels[labels == label]) / len(labels)
-            gini += np.power(p_label, 2)
+            return DecisionTreeNode(value=leaf_value)
 
-        return 1 - gini
+        feature_index = np.random.choice(num_features, self.num_features, replace=False)
 
-    def cal_entropy(self, parent, left_child, right_child, left_weight, right_weight):
+        best_feature, best_threshold = self.best_split(
+            features=features,
+            labels=labels,
+            feature_index=feature_index
+        )
 
-        p_entropy = self.entropy(labels=parent)
-        l_entropy = self.entropy(labels=left_child) * left_weight
-        r_entropy = self.entropy(labels=right_child) * right_weight
+        left_index, right_index = self.split(
+            column=features[:, best_feature],
+            threshold=best_threshold
+        )
 
-        entropy = p_entropy - (l_entropy + r_entropy)
+        left = self.tree(features[left_index, :], labels[left_index], self.curr_depth + 1)
+        right = self.tree(features[right_index, :], labels[right_index], self.curr_depth + 1)
 
-        return entropy
+        return DecisionTreeNode(best_feature, best_threshold, left, right)
+
+    def best_split(self, features, labels, feature_index):
+        """
+        Find the best feature and threshold for splitting the data.
+
+        :param features: The features of the data.
+        :param labels: The labels of the data.
+        :param feature_index: The indices of features to consider for splitting.
+        :return: The best feature and threshold for splitting.
+        """
+        best_gain = -1
+        split_index, split_threshold = None, None
+
+        for index in feature_index:
+            column = features[:, index]
+            thresholds = np.unique(column)
+
+            for threshold in thresholds:
+
+                gain = self.info_gain(
+                    labels=labels,
+                    column=column,
+                    threshold=threshold
+                )
+
+                if gain > best_gain:
+                    best_gain = gain
+                    split_index = index
+                    split_threshold = threshold
+
+        return split_index, split_threshold
+
+    def info_gain(self, labels, column, threshold):
+        """
+        Calculate the information gain for a split.
+
+        :param labels: The labels of the data.
+        :param column: The column (feature) being split.
+        :param threshold: The threshold for splitting the column.
+        :return: The information gain for the split.
+        """
+
+        parent_entropy = self.entropy(labels)
+
+        left_index, right_index = self.split(column, threshold)
+
+        if len(left_index) == 0 or len(right_index) == 0:
+            return 0
+
+        n = len(labels)
+        n_left, n_right = len(left_index), len(right_index)
+        e_left, e_right = self.entropy(labels=labels[left_index]), self.entropy(labels=labels[right_index])
+        child_entropy = (n_left / n) * e_left + (n_right / n) * e_right
+
+        info_gain = parent_entropy - child_entropy
+
+        return info_gain
+
+    def split(self, column, threshold):
+        """
+        Split a column into left and right indices based on a threshold.
+
+        :param column: The column (feature) to be split.
+        :param threshold: The threshold for splitting the column.
+        :return: Indices of the left and right subsets after the split.
+        """
+        left_index = np.argwhere(column <= threshold).flatten()
+        right_index = np.argwhere(column > threshold).flatten()
+        return left_index, right_index
 
     def entropy(self, labels):
+        """
+        Calculate the entropy of a set of labels.
 
-        class_labels = np.unique(labels)
-        entropy = 0
+        :param labels: The labels for which to calculate entropy.
+        :return: The entropy of the labels.
+        """
 
-        for label in class_labels:
+        hist = np.bincount(labels)
+        ps = hist / len(labels)
 
-            p_label = len(labels[labels == label]) / len(labels)
-            entropy += - p_label * np.log2(p_label)
+        entropy = -np.sum([p * np.log(p) for p in ps if p > 0])
 
         return entropy
 
-    def left_value(self, labels):
-        labels = list(labels)
-        return max(labels, key=labels.count)
+    def best_label(self, labels):
+        """
+        Find the most common label in a set of labels.
 
-    def tree(self, tree=None, indent=" "):
-        if not tree:
-            tree = self.root
-        if tree.value is not None:
-            print(tree.value)
-        else:
-            print('X_' + str(tree.feature_index), '<=', tree.threshold, '?', tree.info_gain)
-            print('%sleft:' % indent, end='')
-            self.tree(tree.left, indent + indent)
-            print('%sright' % indent, end='')
-            self.tree(tree.right, indent + indent)
+        :param labels: The labels for which to find the most common label.
+        :return: The most common label.
+        """
+        counter = Counter(labels)
+        value = counter.most_common(1)[0][0]
+        return value
 
     def predict(self, data):
-        prediction = [self.make_prediction(point=point, tree=self.root) for point in data]
-        return prediction
+        """
+        Predict the labels for a set of data points.
 
-    def make_prediction(self, point, tree):
-        if tree.value:
-            return tree.value
-        feature_val = point[tree.feature_index]
-        if feature_val <= tree.threshold:
-            return self.make_prediction(point=point, tree=tree.left)
-        else:
-            return self.make_prediction(point=point, tree=tree.right)
+        :param data: The data points for which to make predictions.
+        :return: An array of predicted labels.
+        """
+
+        return np.array([self.traverse_tree(point=point, node=self.root) for point in data])
+
+    def traverse_tree(self, point, node):
+        """
+        Traverse the decision tree to predict a label for a data point.
+
+        :param point: The data point for which to make a prediction.
+        :param node: The current node in the decision tree.
+        :return: The predicted label.
+        """
+
+        if node.leaf_node():
+            return node.value
+
+        if point[node.feature] <= node.threshold:
+            return self.traverse_tree(point, node.left)
+
+        return self.traverse_tree(point, node.right)
 
 
 class DecisionTreeNode:
-    def __init__(self, feature_index=None, threshold=None, left=None, right=None, info_gain=None, value=None):
-        self.feature_index = feature_index
+
+    def __init__(self, feature=None, threshold=None, left=None, right=None, *, value=None):
+        """
+        Initialize a node for a decision tree.
+
+        :param feature: The feature index for the node.
+        :param threshold: The threshold for splitting the feature.
+        :param left: The left child node.
+        :param right: The right child node.
+        :param value: The predicted value for a leaf node.
+        """
+        self.feature = feature
         self.threshold = threshold
         self.left = left
         self.right = right
-        self.info_gain = info_gain
         self.value = value
+
+    def leaf_node(self):
+        """
+        Check if the current node is a leaf node.
+
+        :return: True if the node is a leaf, False otherwise.
+        """
+        return self.value is not None
+
+
 
 
 

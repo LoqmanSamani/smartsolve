@@ -3,6 +3,7 @@ import random
 import os
 import joblib
 import sys
+from collections import Counter
 
 
 class LinearRegression:
@@ -642,284 +643,558 @@ class LogisticRegression:
             raise ValueError("Please first train the model, after that you can use the predict function")
 
 
-
-
-
 class DecisionTree:
     """
-    Decision Tree classifier.
+    A Decision Tree classifier for binary classification problems.
 
-    Args:
-        data (list): A list of tuples where each tuple contains the label (y) as the first element
-            and a list of features (x1, x2, ..., xn) as the second element.
-        min_points (int): Minimum number of data points required to split a node.
-        max_depth (int): Maximum depth of the decision tree.
-        curr_depth (int): Current depth during tree construction.
-        algorithm (str): The impurity measure for node splitting. Supported values are 'gini' (default) and 'entropy'.
-
-    Attributes:
-        root (DecisionTreeNode): The root node of the decision tree.
-
-    Methods:
-        train(): Build the decision tree using the provided training data.
-        build_tree(data, curr_depth): Recursively construct the decision tree.
-        best_split(features, num_points, num_features): Find the best feature and threshold to split the data.
-        split(features, index, threshold): Split the data into left and right datasets.
-        info_gain(parent, left_child, right_child, algorithm): Calculate information gain using specified impurity measure.
-        gini_impurity(parent, left_child, right_child, left_weight, right_weight): Calculate Gini impurity.
-        gini_index(labels): Calculate the Gini index for a set of labels.
-        cal_entropy(parent, left_child, right_child, left_weight, right_weight): Calculate entropy.
-        entropy(labels): Calculate entropy for a set of labels.
-        left_value(labels): Determine the most common label in a node.
-        tree(tree, indent): Display the decision tree structure.
-        predict(data): Make predictions on new data points.
-        make_prediction(point, tree): Recursively navigate the decision tree to make predictions.
-
+    :param train_data: The training data.
+    :param min_points: The minimum number of data points required to split a node (default is 2).
+    :param max_depth: The maximum depth of the decision tree (default is 10).
+    :param num_features: The number of random features to consider for each split (default is None).
+    :param curr_depth: The current depth of the tree while building (default is 0).
     """
 
-    def __init__(self, data, min_points=2, max_depth=2, curr_depth=0, algorithm='gini'):
+    def __init__(self, train_data, min_points=2, max_depth=10, num_features=None, curr_depth=0):
 
-        self.data = data
-        self.min_points = min_points  # minimum number of points (samples) in data to split
+        self.train_data = train_data
+        self.min_points = min_points
         self.max_depth = max_depth
+        self.num_features = num_features
         self.curr_depth = curr_depth
-        self.algorithm = algorithm
 
         self.root = None
 
     def train(self):
         """
-        Build the decision tree using the provided training data.
+        Train the decision tree on the provided training data.
         """
-
-        self.root = self.build_tree(data=self.data, curr_depth=self.curr_depth)
-
-    def build_tree(self, data, curr_depth):
-        """
-        Recursively construct the decision tree.
-
-        Args:
-            data (list): Training data for the current node.
-            curr_depth (int): Current depth during tree construction.
-
-        Returns:
-            DecisionTreeNode: The root node of the subtree.
-
-        """
-
-        features = np.array([point[-1] for point in data])
-        labels = np.array([point[0] for point in data])
-
-        num_points = len(list(features))
-        num_features = features.shape[1]
-
-        if num_points >= self.min_points and curr_depth <= self.max_depth:
-
-            best_split = self.best_split(
-                features=features,
-                num_points=num_points,
-                num_features=num_features
-            )
-
-            if best_split['info_gain'] > 0:
-
-                left_subtree = self.build_tree(
-                    data=best_split['dataset_left'],
-                    curr_depth=self.curr_depth + 1
-                )
-
-                right_subtree = self.build_tree(
-                    data=best_split['dataset_right'],
-                    curr_depth=self.curr_depth + 1
-                )
-
-                return DecisionTreeNode(
-                    feature_index=best_split['feature_index'],
-                    threshold=best_split['threshold'],
-                    left=left_subtree,
-                    right=right_subtree,
-                    info_gain=best_split['info_gain']
-                )
-
-        left_value = self.left_value(labels=labels)
-
-        return DecisionTreeNode(value=left_value)
-
-    def best_split(self, features, num_points, num_features):
-        """
-        Find the best feature and threshold to split the data.
-
-        Args:
-            features (numpy.ndarray): Features of the training data.
-            num_points (int): Number of data points.
-            num_features (int): Number of features.
-
-        Returns:
-            dict: A dictionary containing the best split information.
-
-        """
-
-        best_split = {}
-        max_info_gain = -float('inf')
-
-        for i in range(num_features):
-            feature_vals = features[:, i]
-            poss_thresholds = np.unique(feature_vals)
-
-            for t in poss_thresholds:
-
-                dataset_left, dataset_right = self.split(
-                    features=features,
-                    index=i,
-                    threshold=t
-                )
-
-                if len(dataset_left) > 0 and len(dataset_right) > 0:
-                    labels, l_labels, r_labels = (
-                        np.array([point[-1] for point in features]),
-                        np.array([point[-1] for point in dataset_left]),
-                        np.array([point[-1] for point in dataset_right])
-                    )
-
-                    curr_info_gain = self.info_gain(
-                        parent=labels,
-                        left_child=l_labels,
-                        right_child=r_labels,
-                        algorithm=self.algorithm
-                    )
-
-                    if float(curr_info_gain) > max_info_gain:
-                        best_split['feature_index'] = i
-                        best_split['threshold'] = t
-                        best_split['dataset_left'] = dataset_left
-                        best_split['dataset_right'] = dataset_right
-                        best_split['info_gain'] = curr_info_gain
-                        max_info_gain = curr_info_gain
-
-        return best_split
-
-    def split(self, features, index, threshold):
-
-        dataset_left = np.array([point for point in features if point[index] <= threshold])
-        dataset_right = np.array([point for point in features if point[index] > threshold])
-        return dataset_left, dataset_right
-
-    def info_gain(self, parent, left_child, right_child, algorithm='entropy'):
-
-        l_weight = len(left_child) / len(parent)
-        r_weight = len(right_child) / len(parent)
-
-        if algorithm == 'gini':
-            gain = self.gini_impurity(
-                parent=parent,
-                left_child=left_child,
-                right_child=right_child,
-                left_weight=l_weight,
-                right_weight=r_weight
-            )
+        features = np.array([point[1] for point in self.train_data])
+        labels = np.array([point[0] for point in self.train_data])
+        if not self.num_features:
+            self.num_features = features.shape[1]
         else:
-            gain = self.cal_entropy(
-                parent=parent,
-                left_child=left_child,
-                right_child=right_child,
-                left_weight=l_weight,
-                right_weight=r_weight
-            )
-        return gain
+            self.num_features = min(features.shape[1], self.num_features)
 
-    def gini_impurity(self, parent, left_child, right_child, left_weight, right_weight):
+        self.root = self.tree(
+            features=features,
+            labels=labels,
+            curr_depth=self.curr_depth
+        )
 
-        p_gini = self.gini_index(labels=parent)
-        l_gini = self.gini_index(labels=left_child) * left_weight
-        r_gini = self.gini_index(labels=right_child) * right_weight
+    def tree(self, features, labels, curr_depth):
+        """
+        Recursively build the decision tree.
 
-        gain = p_gini - (l_gini + r_gini)
+        :param features: The features of the data.
+        :param labels: The labels of the data.
+        :param curr_depth: The current depth in the tree.
+        :return: The root node of the decision tree.
+        """
 
-        return gain
+        num_points, num_features = features.shape
+        num_labels = len(np.unique(labels))
 
-    def gini_index(self, labels):
+        if curr_depth >= self.max_depth or num_labels == 1 or num_points < self.min_points:
+            leaf_value = self.best_label(labels=labels)
 
-        class_labels = np.unique(labels)
-        gini = 0
-        for label in class_labels:
-            p_label = len(labels[labels == label]) / len(labels)
-            gini += np.power(p_label, 2)
+            return DecisionTreeNode(value=leaf_value)
 
-        return 1 - gini
+        feature_index = np.random.choice(num_features, self.num_features, replace=False)
 
-    def cal_entropy(self, parent, left_child, right_child, left_weight, right_weight):
+        best_feature, best_threshold = self.best_split(
+            features=features,
+            labels=labels,
+            feature_index=feature_index
+        )
 
-        p_entropy = self.entropy(labels=parent)
-        l_entropy = self.entropy(labels=left_child) * left_weight
-        r_entropy = self.entropy(labels=right_child) * right_weight
+        left_index, right_index = self.split(
+            column=features[:, best_feature],
+            threshold=best_threshold
+        )
 
-        entropy = p_entropy - (l_entropy + r_entropy)
+        left = self.tree(features[left_index, :], labels[left_index], self.curr_depth + 1)
+        right = self.tree(features[right_index, :], labels[right_index], self.curr_depth + 1)
 
-        return entropy
+        return DecisionTreeNode(best_feature, best_threshold, left, right)
+
+    def best_split(self, features, labels, feature_index):
+        """
+        Find the best feature and threshold for splitting the data.
+
+        :param features: The features of the data.
+        :param labels: The labels of the data.
+        :param feature_index: The indices of features to consider for splitting.
+        :return: The best feature and threshold for splitting.
+        """
+        best_gain = -1
+        split_index, split_threshold = None, None
+
+        for index in feature_index:
+            column = features[:, index]
+            thresholds = np.unique(column)
+
+            for threshold in thresholds:
+
+                gain = self.info_gain(
+                    labels=labels,
+                    column=column,
+                    threshold=threshold
+                )
+
+                if gain > best_gain:
+                    best_gain = gain
+                    split_index = index
+                    split_threshold = threshold
+
+        return split_index, split_threshold
+
+    def info_gain(self, labels, column, threshold):
+        """
+        Calculate the information gain for a split.
+
+        :param labels: The labels of the data.
+        :param column: The column (feature) being split.
+        :param threshold: The threshold for splitting the column.
+        :return: The information gain for the split.
+        """
+
+        parent_entropy = self.entropy(labels)
+
+        left_index, right_index = self.split(column, threshold)
+
+        if len(left_index) == 0 or len(right_index) == 0:
+            return 0
+
+        n = len(labels)
+        n_left, n_right = len(left_index), len(right_index)
+        e_left, e_right = self.entropy(labels=labels[left_index]), self.entropy(labels=labels[right_index])
+        child_entropy = (n_left / n) * e_left + (n_right / n) * e_right
+
+        info_gain = parent_entropy - child_entropy
+
+        return info_gain
+
+    def split(self, column, threshold):
+        """
+        Split a column into left and right indices based on a threshold.
+
+        :param column: The column (feature) to be split.
+        :param threshold: The threshold for splitting the column.
+        :return: Indices of the left and right subsets after the split.
+        """
+        left_index = np.argwhere(column <= threshold).flatten()
+        right_index = np.argwhere(column > threshold).flatten()
+        return left_index, right_index
 
     def entropy(self, labels):
+        """
+        Calculate the entropy of a set of labels.
 
-        class_labels = np.unique(labels)
-        entropy = 0
+        :param labels: The labels for which to calculate entropy.
+        :return: The entropy of the labels.
+        """
 
-        for label in class_labels:
+        hist = np.bincount(labels)
+        ps = hist / len(labels)
 
-            p_label = len(labels[labels == label]) / len(labels)
-            entropy += - p_label * np.log2(p_label)
+        entropy = -np.sum([p * np.log(p) for p in ps if p > 0])
 
         return entropy
 
-    def left_value(self, labels):
-        labels = list(labels)
-        return max(labels, key=labels.count)
+    def best_label(self, labels):
+        """
+        Find the most common label in a set of labels.
 
-    def tree(self, tree=None, indent=" "):
-        if not tree:
-            tree = self.root
-        if tree.value is not None:
-            print(tree.value)
-        else:
-            print('X_' + str(tree.feature_index), '<=', tree.threshold, '?', tree.info_gain)
-            print('%sleft:' % (indent), end='')
-            self.tree(tree.left, indent + indent)
-            print('%sright' % (indent), end='')
-            self.tree(tree.right, indent + indent)
+        :param labels: The labels for which to find the most common label.
+        :return: The most common label.
+        """
+        counter = Counter(labels)
+        value = counter.most_common(1)[0][0]
+        return value
 
     def predict(self, data):
-        prediction = [self.make_prediction(point=point, tree=self.root) for point in data]
-        return prediction
+        """
+        Predict the labels for a set of data points.
 
-    def make_prediction(self, point, tree):
-        if tree.value:
-            return tree.value
-        feature_val = point[tree.feature_index]
-        if feature_val <= tree.threshold:
-            return self.make_prediction(point=point, tree=tree.left)
-        else:
-            return self.make_prediction(point=point, tree=tree.right)
+        :param data: The data points for which to make predictions.
+        :return: An array of predicted labels.
+        """
+
+        return np.array([self.traverse_tree(point=point, node=self.root) for point in data])
+
+    def traverse_tree(self, point, node):
+        """
+        Traverse the decision tree to predict a label for a data point.
+
+        :param point: The data point for which to make a prediction.
+        :param node: The current node in the decision tree.
+        :return: The predicted label.
+        """
+
+        if node.leaf_node():
+            return node.value
+
+        if point[node.feature] <= node.threshold:
+            return self.traverse_tree(point, node.left)
+
+        return self.traverse_tree(point, node.right)
 
 
 class DecisionTreeNode:
-    """
-    Node for the Decision Tree.
 
-    Args:
-        feature_index (int): Index of the feature used for splitting this node.
-        threshold (float): Threshold value for splitting.
-        left (DecisionTreeNode): The left subtree.
-        right (DecisionTreeNode): The right subtree.
-        info_gain (float): Information gain associated with the split.
-        value: Predicted label if this is a leaf node.
+    def __init__(self, feature=None, threshold=None, left=None, right=None, *, value=None):
+        """
+        Initialize a node for a decision tree.
 
-    """
-    def __init__(self, feature_index=None, threshold=None, left=None, right=None, info_gain=None, value=None):
-        self.feature_index = feature_index
+        :param feature: The feature index for the node.
+        :param threshold: The threshold for splitting the feature.
+        :param left: The left child node.
+        :param right: The right child node.
+        :param value: The predicted value for a leaf node.
+        """
+        self.feature = feature
         self.threshold = threshold
         self.left = left
         self.right = right
-        self.info_gain = info_gain
         self.value = value
+
+    def leaf_node(self):
+        """
+        Check if the current node is a leaf node.
+
+        :return: True if the node is a leaf, False otherwise.
+        """
+        return self.value is not None
 
 
 class KMeansClustering:
-    pass
+
+    def __init__(self, train_data, num_clusters=2, max_iter=100, threshold=1e-3):
+        """
+        Initializes a KMeansClustering object.
+
+        :param train_data: The training data.
+        :param num_clusters: The number of clusters to create.
+        :param max_iter: The maximum number of iterations for the K-Means algorithm.
+        :param threshold: The convergence threshold for centroid updates.
+        """
+
+        self.train_data = train_data
+        self.num_clusters = num_clusters
+        self.max_iter = max_iter
+        self.num_dims = len(self.train_data[0])
+        self.threshold = threshold
+
+        self.clusters = {}  # a dictionary to store the detected clusters
+
+    def train(self):
+        """
+        Train the KMeans model on the provided data.
+        """
+
+        data = np.array(self.train_data)
+        prev_centroids = self.initialization(data, self.num_clusters)
+        cluster = [0 for i in range(len(self.train_data))]
+        cluster_keys = [i for i in range(self.num_clusters)]
+        change_centroids = 1e+10
+
+        for i in range(self.max_iter):
+
+            if change_centroids > self.threshold:
+
+                cluster = self.cluster(self.train_data, self.num_clusters, prev_centroids)
+
+                new_centroids = self.centroids(self.train_data, self.num_clusters, cluster)
+                change_centroids = self.measure_change(new_centroids, prev_centroids)
+                prev_centroids = new_centroids
+
+        for key in cluster_keys:
+            for j in range(len(self.train_data)):
+                if key == cluster[j]:
+                    if f"Cluster {key+1}" not in self.clusters:
+                        self.clusters[f"Cluster {key+1}"] = [self.train_data[j]]
+                    else:
+                        self.clusters[f"Cluster {key+1}"].append(self.train_data[j])
+
+    def initialization(self, data, num_clusters):
+        """
+        Initialize cluster centroids using random data points from the dataset.
+
+        :param data: The dataset for initialization.
+        :param num_clusters: The number of clusters to create.
+        :return: A NumPy array of initial cluster centroids.
+        """
+
+        centroids = []
+        num_features = len(data[0])
+
+        for i in range(num_clusters):
+            centroid = []
+            for j in range(num_features):
+                cx = np.random.uniform(min(data[:, j]), max(data[:, j]))
+                centroid.append(cx)
+
+            centroids.append(centroid)
+
+        return np.asarray(centroids)
+
+    def cluster(self,data, num_cluster, prev_centroids):
+        """
+        Assign data points to clusters based on the closest centroid.
+
+        :param data: The dataset to cluster.
+        :param num_cluster: The number of clusters.
+        :param prev_centroids: The previous cluster centroids.
+        :return: An array of cluster assignments.
+        """
+
+        cluster = [-1 for _ in range(len(data))]
+        for i in range(len(data)):
+            dist_arr = []
+            for j in range(num_cluster):
+                dist_arr.append(self.distance(data[i], prev_centroids[j]))
+            idx = np.argmin(dist_arr)
+            cluster[i] = idx
+        return np.asarray(cluster)
+
+    def distance(self, a, b):
+        """
+        Compute the Euclidean distance between two data points.
+
+        :param a: The first data point.
+        :param b: The second data point.
+        :return: The Euclidean distance between a and b.
+        """
+        distance = np.sqrt(sum(np.square(a - b)))
+        return distance
+
+    def centroids(self, data, num_cluster, cluster):
+        """
+        Compute new centroids for each cluster based on the assigned data points.
+
+        :param data: The dataset.
+        :param num_cluster: The number of clusters.
+        :param cluster: The cluster assignments for each data point.
+        :return: An array of updated cluster centroids.
+        """
+        cg_arr = []
+        for i in range(num_cluster):
+            arr = []
+            for j in range(len(data)):
+                if cluster[j] == i:
+                    arr.append(data[j])
+            cg_arr.append(np.mean(arr, axis=0))
+        return np.asarray(cg_arr)
+
+    def measure_change(self, prev_centroids, new_centroids):
+        """
+        Measure the change in centroids between iterations to check for convergence.
+
+        :param prev_centroids: The centroids from the previous iteration.
+        :param new_centroids: The updated centroids in the current iteration.
+        :return: The measure of change in centroids.
+        """
+        res = 0
+        for a, b in zip(prev_centroids, new_centroids):
+            res += self.distance(a, b)
+        return res
+
+
+
+class KNearestNeighbors:
+    """
+    K-Nearest Neighbors (KNN) algorithm for classification and regression.
+
+    Parameters:
+        train_data (list): The training data in the format [(y1,[x11,x12,...,x1n]), ...].
+        num_neighbors (int): The number of neighbors to consider (default is 5).
+        distance (str): The distance metric to use ('EU', 'MA, 'MI', 'CH', or 'CO').
+        algorithm (str): The type of task ('classification' or 'regression').
+        p_value (int): The p-value for the Minkowski distance (default is 2).
+
+    Attributes:
+        features (numpy.ndarray): The features of the training data.
+        labels (numpy.ndarray): The labels of the training data.
+
+    Methods:
+        fit(): Fit the model to the training data.
+        custom_distance(point1, point2): Calculate the custom distance between two data points.
+        euclidean (point1, point2): Calculate the Euclidean distance between two points.
+        manhattan(point1, point2): Calculate the Manhattan distance between two points.
+        minkowski(point1, point2): Calculate the Minkowski distance between two points.
+        chebyshev(point1, point2): Calculate the Chebyshev distance between two points.
+        cosine(point1, point2): Calculate the Cosine distance between two points.
+        predict(data): Make predictions for a list of data points.
+        point_predict(point): Predict the class or value of a single data point.
+    """
+    def __init__(self, train_data, num_neighbors=5, distance='EU', algorithm='classification', p_value=2):
+        self.train_data = train_data
+        self.num_neighbors = num_neighbors
+        self.distance = distance
+        self.algorithm = algorithm
+        self.p_value = p_value
+        self.features = None
+        self.labels = None
+
+    def fit(self):
+        """
+        Fit the model to the training data.
+
+        Returns:
+            None
+        """
+        self.features = np.array([point[1] for point in self.train_data])
+        self.labels = np.array([point[0] for point in self.train_data])
+
+    def custom_distance(self, point1, point2):
+        """
+        Calculate the custom distance between two data points.
+
+        Parameters:
+            point1 (list): The first data point.
+            point2 (list): The second data point.
+
+        Returns:
+            float: The distance between the two points.
+        """
+
+        if self.distance == 'EU':
+            return self.euclidean(point1=point1, point2=point2)
+
+        elif self.distance == 'MA':
+            return self.manhattan(point1=point1, point2=point2)
+
+        elif self.distance == 'MI':
+            return self.minkowski(point1=point1, point2=point2)
+
+        elif self.distance == 'CH':
+            return self.chebyshev(point1=point1, point2=point2)
+
+        elif self.distance == 'CO':
+            return self.cosine(point1=point1, point2=point2)
+
+        else:
+            raise ValueError("Invalid distance algorithm. available are: 'EU' (euclidean distance),"
+                             " 'MA' (manhattan distance), 'MI'(minkowski distance), 'CH' (chebyshev distance),"
+                             "'CO' (cosine distance).")
+
+    def euclidean(self, point1, point2):
+        """
+        Calculate the Euclidean distance between two points.
+
+        Parameters:
+            point1 (list): The first data point.
+            point2 (list): The second data point.
+
+        Returns:
+            float: The Euclidean distance between the two points.
+        """
+
+        distance = np.sqrt(np.sum((np.array(point1) - np.array(point2)) ** 2))
+
+        return distance
+
+    def manhattan(self, point1, point2):
+        """
+        Calculate the Manhattan distance between two points.
+
+        Parameters:
+            point1 (list): The first data point.
+            point2 (list): The second data point.
+
+        Returns:
+            float: The Manhattan distance between the two points.
+        """
+
+        distance = np.sum(np.abs(np.array(point1) - np.array(point2)))
+
+        return distance
+
+    def minkowski(self, point1, point2):
+        """
+        Calculate the Minkowski distance between two points.
+
+        Parameters:
+            point1 (list): The first data point.
+            point2 (list): The second data point.
+
+        Returns:
+            float: The Minkowski distance between the two points.
+        """
+
+        distance = (np.sum(np.abs(np.array(point1) - np.array(point2))
+                           ** self.p_value)) ** (1 / self.p_value)
+
+        return distance
+
+    def chebyshev(self, point1, point2):
+        """
+        Calculate the Chebyshev distance between two points.
+
+        Parameters:
+            point1 (list): The first data point.
+            point2 (list): The second data point.
+
+        Returns:
+            float: The Chebyshev distance between the two points.
+        """
+
+        distance = np.max(np.abs(np.array(point1) - np.array(point2)))
+
+        return distance
+
+    def cosine(self, point1, point2):
+        """
+        Calculate the Cosine distance between two points.
+
+        Parameters:
+            point1 (list): The first data point.
+            point2 (list): The second data point.
+
+        Returns:
+            float: The Cosine distance between the two points.
+        """
+
+        dot_product = np.dot(point1, point2)
+        norm_p = np.linalg.norm(point1)
+        norm_q = np.linalg.norm(point2)
+        distance = 1.0 - (dot_product / (norm_p * norm_q))
+        return distance
+
+    def predict(self, data):
+        """
+        Make predictions for a list of data points.
+
+        Parameters:
+            data (list): A list of data points to make predictions for.
+
+        Returns:
+            list: Predictions for each data point.
+        """
+        predictions = [self.point_predict(point=point) for point in data]
+        return predictions
+
+    def point_predict(self, point):
+        """
+        Predict the class or value of a single data point.
+
+        Parameters:
+            point (list): A single data point.
+
+        Returns:
+            int or float: The predicted class (for classification) or value (for regression).
+        """
+        distances = [self.custom_distance(point1=point, point2=train_point) for train_point in self.features]
+        k_indices = np.argsort(distances)[:self.num_neighbors]
+        k_nearest_labels = [self.labels[i] for i in k_indices]
+
+        if self.algorithm == 'classification':
+            most_common = Counter(k_nearest_labels).most_common()
+            return most_common[0][0]
+        elif self.algorithm == 'regression':
+            return np.mean(k_nearest_labels)
+        else:
+            raise ValueError("Invalid algorithm. Supported values: 'classification' or 'regression'")
+
+
+
