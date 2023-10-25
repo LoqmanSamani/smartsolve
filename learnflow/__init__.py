@@ -3,7 +3,7 @@
 from .preprocessing import AnalyseData, SplitData, MissingValue, SelectFeature, CategoricalData, FeatureScaling
 from .models import (LinearRegression, LogisticRegression, DecisionTree, RandomForest, KMeansClustering,
                      KNearestNeighbors, NaiveBayes, PrincipalComponentAnalysis, SupportVectorMachines,
-                     GradientBoosting)
+                     GradientBoosting, GaussianMixtureModel)
 from .evaluation import Validation
 
 
@@ -32,6 +32,7 @@ __all__ = [
     "PrincipalComponentAnalysis",
     "SupportVectorMachines",
     "GradientBoosting",
+    "GaussianMixtureModel",
     "Validation",
     "PACKAGE_VERSION",
     "DEFAULT_CONFIG",
