@@ -867,6 +867,77 @@ class DecisionTreeNode:
         return self.value is not None
 
 
+
+
+class RandomForest:
+
+    def __init__(self, train_data, num_trees=30, max_depth=20, min_points=2, num_features=None, curr_depth=0):
+        """
+        Initializes a Random Forest classifier/regressor.
+
+        :param train_data: Input training data in the form of [(y1, [x11, x12, ..., x1n]), (y2, [x21, x22, x2n]), ...].
+        :param num_trees: The number of decision trees in the random forest (default is 30).
+        :param max_depth: The maximum depth of each decision tree (default is 20).
+        :param min_points: The minimum number of data points in a leaf node (default is 2).
+        :param num_features: The number of features to consider at each split (default is None).
+        :param curr_depth: The current depth of the random forest (default is 0).
+        """
+
+        self.train_data = train_data
+        self.num_trees = num_trees
+        self.max_depth = max_depth
+        self.min_points = min_points
+        self.num_features = num_features
+        self.curr_depth = curr_depth
+
+        self.trees = []
+
+    def fit(self):
+        """
+        Fits the Random Forest model by training multiple decision trees.
+        """
+
+        for _ in range(self.num_trees):
+
+            tree = DecisionTree(
+                train_data=self.train_data,
+                min_points=self.min_points,
+                max_depth=self.max_depth,
+                num_features=self.num_features,
+                curr_depth=self.curr_depth
+            )
+
+            tree.train()
+            self.trees.append(tree)
+
+    def best_label(self, prediction):
+        """
+        Finds the most common label in a list of predictions.
+
+        :param prediction: List of predicted labels.
+        :return: The most common label in the predictions.
+        """
+        counter = Counter(prediction)
+        most_common = counter.most_common(1)[0][0]
+        return most_common
+
+    def predict(self, features):
+        """
+        Predicts labels or values for the given features using the Random Forest.
+
+        :param features: The features to make predictions for.
+        :return: Predicted labels or values for the features.
+        """
+
+        predictions = np.array([tree.predict(features) for tree in self.trees])
+        tree_predictions = np.swapaxes(predictions, 0, 1)
+        predictions = np.array([self.best_label(prediction=prediction) for prediction in tree_predictions])
+
+        return predictions
+
+
+
+
 class KMeansClustering:
 
     def __init__(self, train_data, num_clusters=2, max_iter=100, threshold=1e-3):
@@ -1197,4 +1268,469 @@ class KNearestNeighbors:
             raise ValueError("Invalid algorithm. Supported values: 'classification' or 'regression'")
 
 
+
+
+class NaiveBayes:
+    def __init__(self, train_data, algorithm='classification'):
+        """
+        Initializes a NaiveBayes classifier/regressor.
+
+        :param train_data: Input training data in the form of [(y1, [x11, x12, ..., x1n]), (y2, [x21, x22, x2n]), ...].
+        :param algorithm: The type of algorithm, either 'classification' or 'regression' (default is 'classification').
+        """
+        self.train_data = train_data
+        self.algorithm = algorithm
+
+        self.classes = None
+        self.mean = None  # For storing class means
+        self.variance = None  # For storing class variances
+        self.prior = None
+        self.labels = None
+
+    def train(self):
+        """
+        Trains the NaiveBayes model with the provided training data.
+        """
+        features = np.array([point[1] for point in self.train_data])
+        labels = np.array([point[0] for point in self.train_data])
+
+        num_points, num_features = features.shape
+        self.classes = np.unique(labels)
+
+        self.mean = np.zeros(shape=(len(self.classes), num_features), dtype=np.float64)
+        self.variance = np.zeros(shape=(len(self.classes), num_features), dtype=np.float64)
+        self.prior = np.zeros(len(self.classes), dtype=np.float64)
+
+        for index, cls in enumerate(self.classes):
+            feature_cls = features[labels == cls]
+            self.mean[index, :] = feature_cls.mean(axis=0)
+            self.variance[index, :] = feature_cls.var(axis=0)
+            self.prior[index] = feature_cls.shape[0] / float(num_points)
+
+        self.labels = labels
+
+    def likelihood(self, data, mean, variance):
+        """
+        Calculates the likelihood of the data given the class mean and variance using Gaussian distribution.
+
+        :param data: The data point for which to calculate the likelihood.
+        :param mean: The mean of the class.
+        :param variance: The variance of the class.
+        :return: The likelihood of the data point.
+        """
+
+        epsilon = 1e-4
+        coefficient = 1 / np.sqrt(2 * np.pi * variance + epsilon)
+
+        exponent = np.exp(-((data - mean) ** 2 / (2 * variance + epsilon)))
+        likelihood = coefficient * exponent
+
+        return likelihood
+
+    def predict(self, features):
+        """
+        Predicts the labels or values of the given features.
+
+        :param features: The features to make predictions for.
+        :return: Predicted labels or values for the features.
+        """
+        if self.algorithm == 'classification':
+
+            predictions = [self.point_predict(feature=feature) for feature in features]
+
+            return np.array(predictions)
+
+        elif self.algorithm == 'regression':
+
+            num_samples, _ = features.shape
+            predictions = np.empty(num_samples)
+
+            for index, feature in enumerate(features):
+
+                posteriors = []
+
+                for label_index, label in enumerate(self.classes):
+
+                    prior = np.log((self.labels == label).mean())
+                    pairs = zip(feature, self.mean[label_index], self.variance[label_index])
+
+                    likelihood = np.sum([np.log(self.likelihood(data=data, mean=mean, variance=variance))
+                                         for data, mean, variance in pairs])
+
+                    posteriors.append(prior + likelihood)
+
+                predictions[index] = self.classes[np.argmax(posteriors)]
+
+            return predictions
+
+        else:
+
+            raise ValueError("Invalid algorithm. Supported values: 'classification' or 'regression")
+
+    def point_predict(self, feature):
+        """
+        Predicts the label or value for a single data point (feature).
+
+        :param feature: The data point (feature) to make a prediction for.
+        :return: The predicted label or value for the data point.
+        """
+
+        posteriors = []
+
+        for index, cls in enumerate(self.classes):
+
+            prior = np.log(self.prior[index])
+            posterior = np.sum(np.log(self.probability_density(class_index=index, feature=feature)))
+            posterior = posterior + prior
+
+            posteriors.append(posterior)
+
+        return self.classes[np.argmax(posteriors)]
+
+    def probability_density(self, class_index, feature):
+        """
+        Calculates the probability density of a feature for a specific class.
+
+        :param class_index: The index of the class.
+        :param feature: The feature for which to calculate the probability density.
+        :return: The probability density of the feature for the specified class.
+        """
+
+        mean = self.mean[class_index]
+        var = self.variance[class_index]
+
+        numerator = np.exp(-(np.power(feature - mean, 2)) / (2 * var))
+        denominator = np.sqrt(2 * np.pi * var)
+
+        return numerator / denominator
+
+
+
+class PrincipalComponentAnalysis:
+
+    def __init__(self, features, num_components):
+        """
+        Initializes a Principal Component Analysis (PCA) object.
+
+        :param features: Input features as a 2D array.
+        :param num_components: Number of principal components to retain.
+
+        """
+
+        self.features = features
+        self.num_components = num_components
+
+        self.components = None
+        self.mean = None
+
+    def train(self):
+        """
+        Performs PCA training on the input features.
+        Computes principal components and updates the mean.
+        """
+
+        self.mean = np.mean(self.features, axis=0)
+        features = self.features - self.mean
+
+        covariance = np.cov(features.T)
+
+        eigenvectors, eigenvalues = np.linalg.eig(covariance)
+
+        eigenvectors = eigenvectors.T
+
+        index = np.argsort(eigenvalues)[::-1]
+        eigenvalues = eigenvalues[index]
+        eigenvectors = eigenvectors[index]
+
+        self.components = eigenvectors[:self.num_components]
+
+    def transform(self):
+        """
+        Transforms the input features using the learned principal components.
+
+        :return: Transformed features with reduced dimensions.
+        """
+
+        features = self.features - self.mean
+        transformed = np.dot(features, self.components.T)
+
+        return transformed
+
+
+
+
+
+class SupportVectorMachines:
+    """
+    Support Vector Machines (SVM) classifier.
+
+    Parameters:
+    - training_data: List of training data points in the form [(y, [x1, x2, ..., xn]), ...].
+    - optimization_algorithm: Optimization algorithm to use ('GD' for Gradient Descent,
+      'SMO' for Sequential Minimal Optimization).
+
+    - kernel: Kernel function to use ('linear', 'quadratic', 'gaussian').
+    - learning_rate: Learning rate for GD (default is 1e-4).
+    - lam: Regularization parameter (default is 1e-4).
+    - max_iteration: Maximum number of iterations for training (default is 1000).
+    - threshold: Convergence threshold for GD (default is 1e-5).
+    - regularization_parameter: Regularization parameter for SMO (default is 1).
+    - epsilon: Convergence tolerance for SMO (default is 1e-4).
+    - sigma: Sigma value for the Gaussian kernel (default is -0.1).
+
+    The training_data must have the structure:
+    [(y1, [x11, x12, ..., x1n]), (y2, [x21, x22, x2n]), ..., (ym, [xm1, xm2, ..., xmn])]
+
+    Methods:
+    - train: Train the SVM model using the selected optimization algorithm.
+    - predict: Make predictions on input data points after training.
+
+    Note: Call the 'train' method before making predictions.
+
+    """
+
+    def __init__(self, training_data, optimization_algorithm='GD', kernel='linear', learning_rate=1e-4, lam=1e-4,
+                 max_iteration=1000, threshold=1e-5, regularization_parameter=1, epsilon=1e-4, sigma=-0.1):
+
+        self.training_data = training_data
+        self.optimization_algorithm = optimization_algorithm
+
+        kernels = {
+            'linear': self.linear_kernel,
+            'quadratic': self.quadratic_kernel,
+            'gaussian': self.gaussian_kernel
+        }
+
+        self.kernel = kernels[kernel]
+        self.learning_rate = learning_rate
+        self.lam = lam
+        self.max_iteration = max_iteration
+        self.threshold = threshold
+        self.regularization_parameter = regularization_parameter
+        self.epsilon = epsilon
+        self.sigma = sigma
+        self.weights = None
+        self.bias = None
+        self.algorithms = ['SGD', 'SMO']
+
+    def train(self):
+        """
+        Train the Support Vector Machines (SVM) model using the specified optimization algorithm.
+
+        This method iteratively updates the weights and bias to find the optimal decision boundary.
+
+        Returns:
+        None
+        """
+        # Training data
+        points = np.array([item[1] for item in self.training_data])
+        labels = np.array([item[0] for item in self.training_data])
+
+        # Initialize weights and bias
+        self.weights = np.zeros(points.shape[1])
+        self.bias = 0.0
+
+        num_iter_count = 0
+
+        if self.optimization_algorithm == 'GD':
+            # Train using Gradient Descent (GD)
+            for j in range(self.max_iteration):
+                for i, point in enumerate(points):
+                    error = labels[i] * (np.dot(point, self.weights)) + self.bias
+                    if error <= 1:
+                        # Update weights and bias
+                        d_weights, d_bias = self.der_hinge_loss(error, point, labels[i])
+                        self.weights -= self.learning_rate * d_weights
+                        self.bias -= self.learning_rate * d_bias
+                    num_iter_count += 1
+        elif self.optimization_algorithm == 'SMO':
+            # Train using Sequential Minimal Optimization (SMO)
+            # Add the SMO training logic here
+            pass
+
+        self.weights = self.weights  # Save the learned weights
+        self.bias = self.bias  # Save the learned bias
+
+    def der_hinge_loss(self, error, point, label):
+
+        if error > 1:
+            d_weights = 2 * self.lam * self.weights
+
+            d_bias = 0
+
+        else:
+            d_weights = 2 * self.lam * self.weights - (point * label)
+
+            d_bias = - label
+
+        return d_weights, d_bias
+
+    def linear_kernel(self, point1, point2):
+
+        import numpy as np
+
+        calc = np.dot(point1, point2.T)
+
+        return calc
+
+    def quadratic_kernel(self, point1, point2):
+
+        import numpy as np
+
+        calc = np.power(self.linear_kernel(point1, point2), 2)
+
+        return calc
+
+    def gaussian_kernel(self, point1, point2):
+
+        import numpy as np
+
+        calc = np.exp(-np.power(np.linalg.norm(point1 - point2), 2) / (2 * self.sigma ** 2))
+
+        return calc
+
+    def random_num(self, a, b, z):
+
+        import numpy as np
+
+        lst = list(range(a, z)) + list(range(z + 1, b))
+
+        return np.random.choice(lst)
+
+    def weight_calculator(self, point, label, alpha):
+
+        import numpy as np
+
+        weights = np.dot(point.T, np.multiply(alpha, label))
+
+        return weights
+
+    def bias_calculator(self, point, label, weights):
+
+        import numpy as np
+
+        bias = np.mean(label - np.dot(point, weights))
+
+        return bias
+
+    def prediction_error(self, point_k, label_k, weights, bias):
+
+        import numpy as np
+
+        error = np.sign(np.dot(point_k, weights) + bias) - label_k
+
+        return error
+
+    def compute_l_h(self, c, alpha_pj, alpha_pi, label_j, label_i):
+
+        import numpy as np
+
+        if label_i != label_j:
+
+            bounds = np.max(0, alpha_pj - alpha_pi), np.min(c, c - alpha_pi + alpha_pj)
+
+            return bounds
+
+        else:
+
+            bounds = np.max(0, alpha_pj + alpha_pi), np.min(c, c - alpha_pi + alpha_pj)
+
+            return bounds
+
+    def predict(self, points):
+        """
+        Make predictions using the trained SVM model.
+
+        Parameters:
+        - points: List of data points to make predictions on.
+
+        Returns:
+        List of predictions (-1 or 1) for each input point.
+        """
+        points = np.array(points)
+
+        if self.weights is not None and self.bias is not None:
+
+            predictions = [np.sign(np.dot(point, self.weights) + self.bias) for point in points]
+
+            return predictions
+
+        else:
+
+            raise ValueError("Model has not been trained. You need to call the 'train' method first.")
+
+
+
+class GradientBoosting:
+    """
+    A gradient boosting classifier.
+
+    Args:
+    train_data (list): Training data in the form [(label, features), ...].
+    min_points (int): Minimum number of data points for a node (default is 2).
+    max_depth (int): Maximum depth of decision trees (default is 2).
+    num_features (int): Number of features to consider for each tree (default is None).
+    num_trees (int): Number of boosting iterations (default is 10).
+    curr_depth (int): Current depth during training (default is 0).
+    threshold (float): Classification threshold (default is 0.5).
+    """
+
+    def __init__(self, train_data, min_points=2, max_depth=2, num_features=None, num_trees=10,
+                 curr_depth=0, threshold=0.5):
+
+        self.train_data = train_data
+        self.max_depth = max_depth
+        self.num_features = num_features
+        self.min_points = min_points
+        self.num_trees = num_trees
+        self.curr_depth = curr_depth
+        self.threshold = threshold
+        self.trees = []
+
+    def train(self):
+        """
+        Train the gradient boosting classifier.
+        """
+
+        features = [point[1] for point in self.train_data]
+        labels = [point[0] for point in self.train_data]
+        data = [(label, point) for label, point in zip(labels, features)]
+
+        for i in range(self.num_trees):
+
+            tree = DecisionTree(train_data=data,
+                                min_points=self.min_points,
+                                max_depth=self.max_depth,
+                                num_features=self.num_features,
+                                curr_depth=self.curr_depth
+                                )
+
+            tree.train()
+            predicted = tree.predict(features)
+            labels = [np.array(labels) - predicted]
+
+            self.trees.append(tree)
+
+    def predict(self, features):
+        """
+        Make predictions using the trained gradient boosting classifier.
+
+        Args:
+        features (list): List of feature vectors for prediction.
+
+        Returns:
+        numpy.ndarray: Predicted labels (0 or 1) for each input feature vector.
+        """
+
+        # Initialize a list to store the prediction value for each tree
+        trees_predictions = np.empty((len(features), len(self.trees)))
+
+        for i, tree in enumerate(self.trees):
+            trees_predictions[:, i] = tree.predict(features)
+
+        predictions = np.sum(trees_predictions, axis=1)
+
+        predictions = np.float64(predictions >= self.threshold)
+
+        return predictions
 

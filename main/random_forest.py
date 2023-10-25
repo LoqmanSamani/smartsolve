@@ -1,194 +1,71 @@
-from decision_tree import DecisionTree
-from random import sample
-from time import time
-
-
-
-
+from learnflow.models import DecisionTree
+from collections import Counter
+import numpy as np
 
 
 class RandomForest:
 
+    def __init__(self, train_data, num_trees=30, max_depth=20, min_points=2, num_features=None, curr_depth=0):
+        """
+        Initializes a Random Forest classifier/regressor.
 
-    def __init__(self, training_data, feature_subsets, validation_data=None, num_trees=20, max_features=None,
-                 impurity_threshold=None, data_proportion=0.20, train_time=None):
+        :param train_data: Input training data in the form of [(y1, [x11, x12, ..., x1n]), (y2, [x21, x22, x2n]), ...].
+        :param num_trees: The number of decision trees in the random forest (default is 30).
+        :param max_depth: The maximum depth of each decision tree (default is 20).
+        :param min_points: The minimum number of data points in a leaf node (default is 2).
+        :param num_features: The number of features to consider at each split (default is None).
+        :param curr_depth: The current depth of the random forest (default is 0).
         """
-        the training_data & validation_data must both have this structure:
-        list = [(y1,[x11,x12,...,x1n]),(y2,[x21,x22,x2n]),...,(ym,[xm1,xm2,...,xmn])]
-        """
-        self.training_data = training_data
-        self.feature_subsets = feature_subsets
-        self.validation_data = validation_data
+
+        self.train_data = train_data
         self.num_trees = num_trees
-        self.max_features = max_features
-        self.impurity_threshold = impurity_threshold
-        self.data_proportion = data_proportion  # a proportion of data which will be used to train the trees
-        self.train_time = train_time  # if the training process is too long, it will be stopped
-        self.trees = []  # a list to store the trained trees
+        self.max_depth = max_depth
+        self.min_points = min_points
+        self.num_features = num_features
+        self.curr_depth = curr_depth
 
+        self.trees = []
 
-
-
-
-
-
-
-    def random_data_subset(self):
-
-        num_points = int(self.data_proportion * len(self.training_data))
-
-        data_subset = sample(self.training_data, num_points)
-
-
-        return data_subset
-
-
-
-
-
-
-
-
-    def predict(self, samples):
-
+    def fit(self):
         """
-        param samples:
-        a nested list contains points (points = [[f1, f2, ...][f21, f22, ...], ...])
-         or a single point (point = [f1, f2, ...])
-
-        return:
-        a list of predictions(numbers) or just one single number in the case of single input point.
+        Fits the Random Forest model by training multiple decision trees.
         """
-
-        predictions = []
-        # if the input is just one point
-        if len(samples) == 1:
-            predictions = [tree.predict(samples) for tree in self.trees]
-
-        # if the input is more than one point
-        elif len(samples) > 1:
-
-            for sample in samples:
-                prediction = [tree.predict(sample) for tree in self.trees]
-
-                predictions.append(prediction)
-
-        else:
-            raise ValueError("The input value should be a nested list of features"
-                             " for each point of just a list of features for a single point!")
-
-        predicted = [max(set(prediction), key=predictions.count) for prediction in predictions]
-
-        return predicted
-
-
-
-
-
-
-
-
-    def accuracy(self, test_data=None):
-
-        if self.validation_data:
-
-            points = [point[1] for point in self.validation_data]
-            labels = [point[0] for point in self.validation_data]
-
-            predicted = self.predict(points)
-
-            accuracy = sum([1 if predict == label else 0 for predict, label in zip(predicted, labels)]) / len(labels)
-
-        elif test_data:
-
-            points = [point[1] for point in test_data]
-            labels = [point[0] for point in test_data]
-
-            predicted = self.predict(points)
-
-            accuracy = sum([1 if predict == label else 0 for predict, label in zip(predicted, labels)]) / len(labels)
-
-        else:
-            raise ValueError("To calculate the accuracy each point must has its label!"
-                             "The structure of input data must be like this: "
-                             "list = [(y1,[x11,x12,...,x1n]),(y2,[x21,x22,x2n]),...,(ym,[xm1,xm2,...,xmn])]")
-
-        return accuracy
-
-
-
-
-
-
-    def train(self):
-
-        train_time = None  # calculate the process time
-
-        num_iterations = 0
 
         for _ in range(self.num_trees):
 
-            start_time = time()
-
-            training_data = self.random_data_subset()
-
             tree = DecisionTree(
-                training_data=training_data,
-                validation_data=self.validation_data,
-                feature_subsets=self.feature_subsets,
-                impurity_threshold=self.impurity_threshold
+                train_data=self.train_data,
+                min_points=self.min_points,
+                max_depth=self.max_depth,
+                num_features=self.num_features,
+                curr_depth=self.curr_depth
             )
 
-            trained_tree = tree.fit()  # Capture the trained tree
+            tree.train()
+            self.trees.append(tree)
 
-            self.trees.append(trained_tree)  # Store it in the list of trees
+    def best_label(self, prediction):
+        """
+        Finds the most common label in a list of predictions.
 
-            end_time = time()
+        :param prediction: List of predicted labels.
+        :return: The most common label in the predictions.
+        """
+        counter = Counter(prediction)
+        most_common = counter.most_common(1)[0][0]
+        return most_common
 
-            elapsed_time = end_time - start_time
+    def predict(self, features):
+        """
+        Predicts labels or values for the given features using the Random Forest.
 
-            train_time += elapsed_time
+        :param features: The features to make predictions for.
+        :return: Predicted labels or values for the features.
+        """
 
-            num_iterations += 1
+        predictions = np.array([tree.predict(features) for tree in self.trees])
+        tree_predictions = np.swapaxes(predictions, 0, 1)
+        predictions = np.array([self.best_label(prediction=prediction) for prediction in tree_predictions])
 
-            if self.train_time:
-
-                if time > self.train_time:
-
-                    raise TimeoutError(f"The training time is after {num_iterations} iterations out!")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        return predictions
 
