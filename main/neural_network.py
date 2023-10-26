@@ -4,8 +4,6 @@ from scipy.special import softmax
 import pickle
 
 
-
-
 class NeuralNetwork:
     def __init__(self, training_data, validation_data=None, input_layer_neurons=None, output_layer_neurons=None,
                  num_hidden_layers=1, hidden_layer_neurons=None, max_iteration=100, learning_rate=1e-4,
@@ -623,4 +621,10 @@ class NeuralNetwork:
             self.weights = model_params['weights']
         else:
             raise ValueError("The loaded model parameters are missing or incorrect.")
+
+
+
+
+
+
 

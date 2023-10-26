@@ -1,20 +1,18 @@
-
-# Import specific classes/modules from each submodule
 from .preprocessing import AnalyseData, SplitData, MissingValue, SelectFeature, CategoricalData, FeatureScaling
+
 from .models import (LinearRegression, LogisticRegression, DecisionTree, RandomForest, KMeansClustering,
                      KNearestNeighbors, NaiveBayes, PrincipalComponentAnalysis, SupportVectorMachines,
-                     GradientBoosting, GaussianMixtureModel)
+                     GradientBoosting, GaussianMixtureModel, SingularValueDecomposition)
+
 from .evaluation import Validation
 
 
-# Define package-level variables or configuration
-PACKAGE_VERSION = "0.0.1"
+PACKAGE_VERSION = "1.0.0"
 DEFAULT_CONFIG = {
     "verbose": False,
     "debug": False,
 }
 
-# This line specifies what gets imported when using 'from learn-flow import *'
 __all__ = [
     "AnalyseData",
     "SplitData",
@@ -33,6 +31,7 @@ __all__ = [
     "SupportVectorMachines",
     "GradientBoosting",
     "GaussianMixtureModel",
+    "SingularValueDecomposition",
     "Validation",
     "PACKAGE_VERSION",
     "DEFAULT_CONFIG",

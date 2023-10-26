@@ -169,26 +169,27 @@ class Validation:
         else:
             raise ValueError("The number of actual and predicted lists do not match!")
 
-
-
-
-
-
-    def roc_curve(self, training_data, validation_data, positive_label=None, negative_label=None,
-                  num_iter=10, algorithm='GradientDescent', lower_bound=0.4, upper_bound=0.6, num_iteration=100):
+    def roc_curve(self, training_data, validation_data, coefficients=None, bias=None, algorithm='GD',
+                  learning_rate=1e-4, positive_label=None, negative_label=None, max_iter=100, con_threshold=1e-6,
+                  epsilon=1e-10, proportion=0.1,num_iter=10, lower_bound=0.4, upper_bound=0.6):
         """
-        Generate ROC curves and AUC values.
+        Generate Receiver Operating Characteristic (ROC) curves and calculate Area Under the Curve (AUC) values.
 
         :param training_data: Training data for logistic regression.
-        :param validation_data: Validation data for ROC curve.
-        :param positive_label: Specify the positive label.
-        :param negative_label: Specify the negative label.
-        :param num_iter: Number of iterations for ROC curve threshold.
-        :param algorithm: Logistic regression algorithm.
+        :param validation_data: Validation data for generating ROC curves.
+        :param coefficients: Initial coefficients for logistic regression (if None, they will be initialized).
+        :param bias: Initial bias for logistic regression (if None, it will be initialized).
+        :param algorithm: Logistic regression algorithm ('GD' for Gradient Descent).
+        :param learning_rate: Learning rate for logistic regression.
+        :param positive_label: Specify the positive label (default is the first unique label in data).
+        :param negative_label: Specify the negative label (default is the second unique label in data).
+        :param max_iter: Maximum number of iterations for logistic regression.
+        :param con_threshold: Convergence threshold for logistic regression.
+        :param epsilon: Small constant to avoid division by zero.
+        :param num_iter: Number of threshold values for ROC curve.
         :param lower_bound: Lower bound for ROC curve threshold.
         :param upper_bound: Upper bound for ROC curve threshold.
-        :param num_iteration: Number of iterations for logistic regression.
-        :return: List of ROC curve data (threshold, AUC).
+        :return: List of ROC curve data as tuples (threshold, AUC).
         """
 
         roc_curves = []
@@ -212,17 +213,22 @@ class Validation:
         for threshold in thresholds:
 
             model = LogisticRegression(
-                training_data=training_data,
-                validation_data=None,
-                intercept=0,
-                threshold=threshold,
+                train_data=training_data,
+                coefficients=coefficients,
+                bias=bias,
                 algorithm=algorithm,
-                num_iteration=num_iteration
+                learning_rate=learning_rate,
+                max_iter=max_iter,
+                threshold=threshold,
+                con_threshold=con_threshold,
+                epsilon=epsilon,
+                proportion=proportion
+
             )
 
             model.train()
 
-            predicted = model.predict(data=data)
+            predicted = model.predict(data=np.array(data))
 
             fpr, tpr, thresholds = roc_curve(actual, predicted)
             roc_auc = auc(fpr, tpr)

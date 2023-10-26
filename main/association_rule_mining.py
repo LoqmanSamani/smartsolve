@@ -543,3 +543,9 @@ class AssociationRuleMining:
             return self.fp_tree
         else:
             raise ValueError('This parameter is not calculated because the used algorithm was not FG-Growth')
+
+
+
+
+
+

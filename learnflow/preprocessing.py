@@ -3,7 +3,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-from learnflow.models import LinearRegression, LogisticRegression, DecisionTree
+from learnflow.models import LinearRegression, LogisticRegression
 from learnflow.evaluation import Validation
 from scipy.stats import f_oneway, chi2_contingency
 
@@ -634,9 +634,9 @@ class SelectFeature:
 
         Args:
             model (str): The machine learning model to use for evaluation
-            ('LinearRegression', 'LogisticRegression', or 'DecisionTree').
+            ('LinearRegression' or 'LogisticRegression').
             evaluation (str): The evaluation metric to use
-            ('accuracy', 'recall', 'precision', 'MSE', or other).
+            ('accuracy', 'recall', 'precision', and 'MSE').
 
         Returns:
             Dict[Tuple[str], float]: A dictionary containing
@@ -644,7 +644,8 @@ class SelectFeature:
         """
 
         train_models = ['LinearRegression', 'LogisticRegression', 'DecisionTree']
-        eva_models = ['accuracy', 'recall', 'precision', 'MSE', '...']  # TODO: you should add mode models
+        eva_models = ['accuracy', 'recall', 'precision', 'MSE']
+
         load_data = pd.read_csv(self.csv_file)
         features = []
         for col in load_data.columns:
@@ -656,9 +657,9 @@ class SelectFeature:
         while len(features) >= 1:
 
             split = SplitData(load_data, train=0.8, test=0.2)
-            train_set, test_set = split.random()
+            train_set, _, test_set = split.random()
 
-            test_data = [feature[-1] for feature in test_data]
+            test_data = np.array([feature[-1] for feature in test_set])
             test_label = [label[0] for label in test_data]
 
             predicted = None
@@ -667,37 +668,33 @@ class SelectFeature:
 
             if model in train_models:
                 if model == 'LinearRegression':
-                    train_model = LinearRegression(train_set)
+                    train_model = LinearRegression(train_data=train_set)
                     train_model.train()
                     feature_importance = train_model.coefficients
-                    predicted = train_model.predict(test_set)
+                    predicted = train_model.predict(
+                        features=test_data,
+                        coefficients=train_model.coefficients,
+                        bias=train_model.bias
+                    )
 
                 elif model == 'LogisticRegression':
-                    train_model = LogisticRegression(train_set)
+                    train_model = LogisticRegression(train_data=train_set)
                     train_model.train()
-                    predicted = train_model.predict(test_set)
+                    predicted = train_model.predict(test_data)
                     feature_importance = train_model.coefficients
-
-                elif model == 'DecisionTree':
-                    train_model = DecisionTree(train_set)
-                    train_model.train()
-                    predicted = train_model.predict(test_set)
-                    feature_importance = train_model.gini_impurity(load_data)
 
             else:
                 raise ValueError("Please choose a valid train model. Available models are:"
-                                 " 'LinearRegression', 'LogisticRegression' and 'DecisionTree'.")
-
-            # TODO: you should change the linear regression and other models based on the code here!!!
+                                 " 'LinearRegression' and 'LogisticRegression'.")
 
             if evaluation in eva_models:
                 eva_model = Validation()
                 if evaluation == 'accuracy':
-                    evaluate = eva_model.accuracy(actual=test_label, predicted=predicted)
+                    evaluate = eva_model.accuracy(labels=test_label, predicted=predicted)
                 elif evaluation == 'recall':
-                    eva_model = eva_model.recall(actual=test_label, predicted=predicted)
+                    eva_model = eva_model.recall(labels=test_label, predicted=predicted)
                 elif evaluation == 'precision':
-                    eva_model = eva_model.precision(actual=test_label, predicted=predicted)
+                    eva_model = eva_model.precision(labels=test_label, predicted=predicted)
                 elif evaluation == 'MSE':
                     eva_model = eva_model.mean_squared_error(actual=test_label, predicted=predicted)
 
