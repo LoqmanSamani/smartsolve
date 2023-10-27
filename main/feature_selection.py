@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
-from learnflow.preprocessing import SplitData
-from learnflow.models import LinearRegression, LogisticRegression, DecisionTree
-from learnflow.evaluation import Validation
+from smartsolve.preprocessing import SplitData
+from smartsolve.models import LinearRegression, LogisticRegression, DecisionTree
+from smartsolve.evaluation import Validation
 from scipy.stats import f_oneway, chi2_contingency
 
 

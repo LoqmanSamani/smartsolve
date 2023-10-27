@@ -1,5 +1,5 @@
 import pandas as pd
-from learnflow.models import LogisticRegression
+from smartsolve.models import LogisticRegression
 import numpy as np
 from sklearn.metrics import roc_curve, auc
 

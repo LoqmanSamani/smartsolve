@@ -1,0 +1,14 @@
+CHANGELOG.txt
+LICENSE.txt
+MANIFEST.in
+README.txt
+__init__.py
+evaluation.py
+models.py
+preprocessing.py
+setup.py
+smartsolve.egg-info/PKG-INFO
+smartsolve.egg-info/SOURCES.txt
+smartsolve.egg-info/dependency_links.txt
+smartsolve.egg-info/requires.txt
+smartsolve.egg-info/top_level.txt

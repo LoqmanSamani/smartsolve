@@ -1,6 +1,6 @@
 import unittest
 import pandas as pd
-from learnflow.preprocessing import CategoricalData
+from smartsolve.preprocessing import CategoricalData
 
 
 class TestCategoricalData(unittest.TestCase):

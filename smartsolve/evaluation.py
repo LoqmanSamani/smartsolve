@@ -1,5 +1,5 @@
 import pandas as pd
-from learnflow.models import LogisticRegression
+from smartsolve.models import LogisticRegression
 import numpy as np
 from sklearn.metrics import roc_curve, auc
 
@@ -169,9 +169,9 @@ class Validation:
         else:
             raise ValueError("The number of actual and predicted lists do not match!")
 
-    def roc_curve(self, training_data, validation_data, coefficients=None, bias=None, algorithm='GD',
-                  learning_rate=1e-4, positive_label=None, negative_label=None, max_iter=100, con_threshold=1e-6,
-                  epsilon=1e-10, proportion=0.1,num_iter=10, lower_bound=0.4, upper_bound=0.6):
+    def roc_curve(self, training_data, validation_data, coefficients=None, bias=None, learning_rate=1e-4,
+                  positive_label=None, negative_label=None, max_iter=100, seed=42, norm='yes', num_iter=10,
+                  lower_bound=0.4, upper_bound=0.6):
         """
         Generate Receiver Operating Characteristic (ROC) curves and calculate Area Under the Curve (AUC) values.
 
@@ -179,13 +179,12 @@ class Validation:
         :param validation_data: Validation data for generating ROC curves.
         :param coefficients: Initial coefficients for logistic regression (if None, they will be initialized).
         :param bias: Initial bias for logistic regression (if None, it will be initialized).
-        :param algorithm: Logistic regression algorithm ('GD' for Gradient Descent).
         :param learning_rate: Learning rate for logistic regression.
         :param positive_label: Specify the positive label (default is the first unique label in data).
         :param negative_label: Specify the negative label (default is the second unique label in data).
         :param max_iter: Maximum number of iterations for logistic regression.
-        :param con_threshold: Convergence threshold for logistic regression.
-        :param epsilon: Small constant to avoid division by zero.
+        :param seed:
+        :param norm: Should the data before training process be normalized.
         :param num_iter: Number of threshold values for ROC curve.
         :param lower_bound: Lower bound for ROC curve threshold.
         :param upper_bound: Upper bound for ROC curve threshold.
@@ -216,13 +215,11 @@ class Validation:
                 train_data=training_data,
                 coefficients=coefficients,
                 bias=bias,
-                algorithm=algorithm,
                 learning_rate=learning_rate,
                 max_iter=max_iter,
                 threshold=threshold,
-                con_threshold=con_threshold,
-                epsilon=epsilon,
-                proportion=proportion
+                seed=seed,
+                norm=norm
 
             )
 
@@ -286,9 +283,12 @@ class Validation:
     def r_squared(self, actual, predicted):
         """
         Calculate the R-squared (Coefficient of Determination) between actual and predicted values.
+         parameters:
 
         :param actual: List of actual values.
         :param predicted: List of predicted values.
+
+        output:
         :return: R-squared value.
         """
 

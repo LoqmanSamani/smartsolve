@@ -1,7 +1,7 @@
 import unittest
 import numpy as np
 import pandas as pd
-from learnflow.preprocessing import FeatureScaling
+from smartsolve.preprocessing import FeatureScaling
 
 class TestFeatureScaling(unittest.TestCase):
 

@@ -1,4 +1,4 @@
-from learnflow.models import DecisionTree
+from smartsolve.models import DecisionTree
 from collections import Counter
 import numpy as np
 

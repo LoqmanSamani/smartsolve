@@ -1,6 +1,6 @@
 import unittest
 import pandas as pd
-from learnflow.preprocessing import SelectFeature
+from smartsolve.preprocessing import SelectFeature
 
 
 

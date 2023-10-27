@@ -3,8 +3,8 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-from learnflow.models import LinearRegression, LogisticRegression
-from learnflow.evaluation import Validation
+from smartsolve.models import LinearRegression, LogisticRegression
+from smartsolve.evaluation import Validation
 from scipy.stats import f_oneway, chi2_contingency
 
 
@@ -13,8 +13,11 @@ class AnalyseData:
     def __init__(self, data):
         """
         Initializes the AnalyseData class.
+        parameters:
 
         :param data: Path to the CSV file containing the data.
+        output:
+        None
         """
         self.data = data
 
@@ -628,7 +631,7 @@ class SelectFeature:
 
 
 
-    def elimination(self, model='LinearRegression', evaluation='accuracy'):
+    def elimination(self, model='LinearRegression', evaluation='accuracy', norm='yes'):
         """
         Select features using recursive feature elimination.
 
@@ -672,9 +675,8 @@ class SelectFeature:
                     train_model.train()
                     feature_importance = train_model.coefficients
                     predicted = train_model.predict(
-                        features=test_data,
-                        coefficients=train_model.coefficients,
-                        bias=train_model.bias
+                        data=test_data,
+                        norm=norm
                     )
 
                 elif model == 'LogisticRegression':

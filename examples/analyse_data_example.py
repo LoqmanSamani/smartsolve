@@ -1,4 +1,4 @@
-from learnflow.preprocessing import AnalyseData
+from smartsolve.preprocessing import AnalyseData
 
 
 # Load data from a CSV file

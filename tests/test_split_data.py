@@ -1,5 +1,5 @@
 import unittest
-from learnflow import preprocessing as pre
+from smartsolve import preprocessing as pre
 import random
 import pandas as pd
 

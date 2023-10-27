@@ -1,4 +1,4 @@
-from learnflow.models import DecisionTree
+from smartsolve.models import DecisionTree
 import numpy as np
 
 

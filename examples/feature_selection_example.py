@@ -1,4 +1,4 @@
-from learnflow.preprocessing import SelectFeature
+from smartsolve.preprocessing import SelectFeature
 
 
 

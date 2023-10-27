@@ -1,5 +1,5 @@
 # Import necessary libraries and modules
-from learnflow.preprocessing import SplitData
+from smartsolve.preprocessing import SplitData
 import pandas as pd
 import random
 from datetime import datetime, timedelta

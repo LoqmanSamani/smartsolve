@@ -4,7 +4,7 @@ import tempfile
 import os
 import sys
 from io import StringIO
-from learnflow.preprocessing import AnalyseData
+from smartsolve.preprocessing import AnalyseData
 
 
 class TestAnalyseData(unittest.TestCase):

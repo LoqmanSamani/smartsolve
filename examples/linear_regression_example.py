@@ -1,7 +1,7 @@
 # Import necessary modules and classes
 
-from learnflow.models import LinearRegression
-from learnflow.preprocessing import SplitData, AnalyseData
+from smartsolve.models import LinearRegression
+from smartsolve.preprocessing import SplitData, AnalyseData
 import numpy as np
 
 

@@ -9,7 +9,7 @@ class LinearRegression:
                  seed=42, norm='yes'):
         """
         Initialize a Linear Regression model.
-
+        parameters:
         :param train_data: Training data in the form of [(y1,[x11,x12,...,x1n]),(y2,[x21,x22,x2n])
                           ,...,(ym,[xm1,xm2,...,xmn])].
         :param coefficients: Initial coefficients for the model (default is None).
@@ -19,6 +19,8 @@ class LinearRegression:
         :param threshold: Convergence threshold for gradient descent (default is 1e-8).
         :param seed: Random seed for reproducibility (default is 42).
         :param norm: Normalize features or not ('yes' or 'no', default is 'yes').
+        output:
+        None
         """
 
         self.train_data = train_data
