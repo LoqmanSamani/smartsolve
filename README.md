@@ -1,4 +1,5 @@
 # smartsolve
+[image](/home/sam/python_projects/MachineLearningProject/tests/Screenshot from 2023-10-28 19-27-06.png)
 
 ### a mini-machine learning python package
 
