@@ -1,9 +1,15 @@
-# smartsolve
+
+## smartsolve
+
 
 ![Screenshot from 2023-10-28 19-27-06](https://github.com/LoqmanSamani/smartsolve/assets/141053177/9d6cd280-4edd-4745-a9df-1ebc9e08a1cb)
 
 
+
 ### a mini-machine learning python package
+
+
+
 
 **smartsolve** is a versatile machine learning package that empowers you to excel in data analysis and predictive modeling. With a rich array of machine learning models, it equips you to analyze diverse datasets, including text-based, numerical, and categorical data, and make precise predictions. The package is thoughtfully organized into three essential modules: *preprocessing*, *models*, and *evaluation*, each of which hosts a collection of classes with specialized functionalities.
 
