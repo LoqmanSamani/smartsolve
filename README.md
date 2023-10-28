@@ -50,50 +50,50 @@ from smartsolve.preprocessing import AnalyseData, SplitData
 from smartsolve.models import LinearRegression
 from smartsolve.evaluation import Validation
 import numpy as np
-import pandas
-import seaborn
+import pandas as pd
+import seaborn as sns
 
+# Load and analyze data from a text-based file
 
-# Load and analyse data from a text based file
 path = "example_data.csv"
 example = AnalyseData(path)
-
 data = example.load_data()
+
 info = example.infos()
-
 example.stats()
-
 heatmap = example.heat_map(columns='data columns')
 
 
-# A linear regression model as a model's example
+# A linear regression model as an example
 
 # Prepare data for splitting
 labels = list(data['labels_column'])
 feats = ['feature_columns']
 features = [[feature[i] for feature in feats] for i in range(len(labels))]
 
+# Combine labels and features
 input_data = [(label, feature) for label, feature in zip(labels, features)]
 
 # Split the data into training and testing sets
 split = SplitData(data=input_data, method='Random', train=0.8, test=0.2)
 train_data, _, test_data = split.random()
 
-
-# Example of usage a linear regression model
+# Train the linear regression model
 model = LinearRegression(train_data=train_data, max_iter=400, threshold=1e-6)
 model.train()
-weights_rr = model.coefficients
-bias_rr = model.bias
+weights = model.coefficients
+bias = model.bias
 
-# Prepare test 
+# Prepare test data
 test_set = 'test_sample'
 
+# Predict using the trained model
 predicted = model.predict(data=test_set)
 
-# Evaluation the model
+# Evaluate the model
 obj = Validation()
 mse = obj.mean_squared_error(actual='actual labels', predicted=predicted)
+
 ```
 For more examples see this page :[examples](https://github.com/LoqmanSamani/smartsolve/tree/main/examples)
 
