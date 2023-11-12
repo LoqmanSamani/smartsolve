@@ -1,8 +1,0 @@
-Change Log
-============
-0.0.4 (Oct 27, 2023)
-— — — — — — — — — -
-- An update of smartsolve package
-- Modified preprocessing, models, and evaluation modules
-- Included various machine learning models and data preprocessing classes
-- Implemented evaluation functions for assessing model accuracy

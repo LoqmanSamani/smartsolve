@@ -1,0 +1,7 @@
+Change Log
+==========
+0.0.5 (12/11/2023)
+------------------
+- A new update of smartsolve package
+- Modified models module
+

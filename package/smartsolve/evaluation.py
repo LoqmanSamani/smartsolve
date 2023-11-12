@@ -8,7 +8,7 @@ class Validation:
 
     def accuracy(self, labels, predicted):
         """
-        Calculate the accuracy of predicted labels.
+        It calculates the accuracy of predicted labels.
 
         :param labels: List of actual labels.
         :param predicted: List of predicted labels.
@@ -28,7 +28,7 @@ class Validation:
 
     def precision(self, labels, predicted):
         """
-        Calculate precision for each label.
+        it calculates precision for each label.
 
         :param labels: List of actual labels.
         :param predicted: List of predicted labels.

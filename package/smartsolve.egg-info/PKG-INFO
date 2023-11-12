@@ -1,0 +1,16 @@
+Metadata-Version: 2.1
+Name: smartsolve
+Version: 0.0.5
+Summary: A machine learning package
+Author: Loghman Samani
+Author-email: samaniloqman91@gmail.com
+Keywords: python,machine learning
+Classifier: Development Status :: 1 - Planning
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: Unix
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: Microsoft :: Windows
+Description-Content-Type: text/markdown
+
+A machine learning package for data analysis and predictive modeling

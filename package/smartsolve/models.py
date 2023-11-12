@@ -136,7 +136,7 @@ class LinearRegression:
             coefficients=self.coefficients
         )
 
-    def predict(self, data, norm='no'):
+    def predict(self, data, norm='yes'):
         """
         Predict labels for input data.
 

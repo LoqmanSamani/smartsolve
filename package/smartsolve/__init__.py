@@ -18,36 +18,3 @@ from smartsolve.models import GradientBoosting
 from smartsolve.models import GaussianMixtureModel
 from smartsolve.models import SingularValueDecomposition
 from smartsolve.evaluation import Validation
-
-
-PACKAGE_VERSION = "0.0.4"
-DEFAULT_CONFIG = {
-    "verbose": False,
-    "debug": False,
-}
-
-__all__ = [
-    "AnalyseData",
-    "SplitData",
-    "MissingValue",
-    "SelectFeature",
-    "CategoricalData",
-    "FeatureScaling",
-    "LinearRegression",
-    "LogisticRegression",
-    "DecisionTree",
-    "DecisionTreeNode",
-    "RandomForest",
-    "KMeansClustering",
-    "KNearestNeighbors",
-    "NaiveBayes",
-    "PrincipalComponentAnalysis",
-    "SupportVectorMachines",
-    "GradientBoosting",
-    "GaussianMixtureModel",
-    "SingularValueDecomposition",
-    "Validation",
-    "PACKAGE_VERSION",
-    "DEFAULT_CONFIG",
-]
-
