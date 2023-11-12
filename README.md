@@ -108,7 +108,7 @@ For more examples see this page :[examples](https://github.com/LoqmanSamani/smar
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.txt](https://github.com/LoqmanSamani/smartsolve/blob/main/smartsolve/LICENSE.txt) file for details.
+This project is licensed under the MIT License - see the [LICENSE.txt](https://github.com/LoqmanSamani/smartsolve/blob/main/package/smartsolve/LICENSE.txt) file for details.
 
 
 
