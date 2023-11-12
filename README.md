@@ -1,9 +1,16 @@
 
 ## smartsolve
 
+-------------------------------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------------------------------------------
 
 ![Screenshot from 2023-10-28 19-27-06](https://github.com/LoqmanSamani/smartsolve/assets/141053177/9d6cd280-4edd-4745-a9df-1ebc9e08a1cb)
 
+---------------------------------------------
+
+-----------------------------------------------------
 
 
 ### a mini-machine learning python package
@@ -11,13 +18,17 @@
 
 
 
-**smartsolve** is a versatile machine learning package that empowers you to excel in data analysis and predictive modeling. With a rich array of machine learning models, it equips you to analyze diverse datasets, including text-based, numerical, and categorical data, and make precise predictions. The package is thoughtfully organized into three essential modules: *preprocessing*, *models*, and *evaluation*, each of which hosts a collection of classes with specialized functionalities.
+[**smartsolve**](https://pypi.org/project/smartsolve/) is a versatile machine learning package that empowers you to excel in data analysis and predictive modeling. With a rich array of machine learning models, it equips you to analyze diverse datasets, including text-based, numerical, and categorical data, and make precise predictions. The package is thoughtfully organized into three essential modules: *preprocessing*, *models*, and *evaluation*, each of which hosts a collection of classes with specialized functionalities.
+
+------------------------------------------------------------------
 
 ## Table of Contents
 
 - Installation
 - Usage
 - License
+
+-----------------------------------------------------------------------
 
 ## Installation
 
@@ -43,15 +54,17 @@ pip install smartsolve
 ```
 For more information visit: [pypi.org](https://pypi.org/project/smartsolve/)
 
+--------------------------------------------------------------------
+
 ## Usage
 
 **smartsolve** offers a comprehensive workflow for machine learning tasks. Here's how you can use it effectively:
 
-1. **Data Preparation**: Utilize the `preprocessing` module to analyze and prepare your raw data. You can split your data into training, validation, and test sets, which can be used for various machine learning models available in the `models` module.
+1. **Data Preparation**: Utilize the [preprocessing](https://github.com/LoqmanSamani/smartsolve/blob/main/package/smartsolve/preprocessing.py) module to analyze and prepare your raw data. You can split your data into training, validation, and test sets, which can be used for various machine learning models available in the `models` module.
 
-2. **Model Training**: Choose a machine learning model from the `models` module that suits your task. Train your model using the prepared data.
+2. **Model Training**: Choose a machine learning model from the [models](https://github.com/LoqmanSamani/smartsolve/blob/main/package/smartsolve/models.py) module that suits your task. Train your model using the prepared data.
 
-3. **Model Evaluation**: Once your model is trained, employ the `evaluation` module to evaluate its performance. You can assess various metrics like mean squared error (MSE), accuracy, precision, recall, F-score, and more.
+3. **Model Evaluation**: Once your model is trained, employ the [evaluation](https://github.com/LoqmanSamani/smartsolve/blob/main/package/smartsolve/evaluation.py) module to evaluate its performance. You can assess various metrics like mean squared error (MSE), accuracy, precision, recall, F-score, and more.
 
 Here's an example of how to use **smartsolve** to prepare data, train a model, and evaluate its performance:
 ```python
@@ -105,6 +118,8 @@ mse = obj.mean_squared_error(actual='actual labels', predicted=predicted)
 
 ```
 For more examples see this page :[examples](https://github.com/LoqmanSamani/smartsolve/tree/main/examples)
+
+----------------------------------------------------------
 
 ## License
 
