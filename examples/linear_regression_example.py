@@ -2,10 +2,7 @@
 
 from smartsolve.models import LinearRegression
 from smartsolve.preprocessing import SplitData, AnalyseData
-import numpy as np
-
-
-
+from machine_learning.linear_algebra import intro_numpy as np
 
 # Load and analyze the dataset
 path = "/home/sam/python_projects/data_sets/regression/Real estate.csv"

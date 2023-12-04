@@ -1,5 +1,5 @@
 import unittest
-import numpy as np
+from machine_learning.linear_algebra import intro_numpy as np
 import pandas as pd
 from smartsolve.preprocessing import FeatureScaling
 

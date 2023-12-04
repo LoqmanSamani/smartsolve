@@ -1,5 +1,5 @@
 import pandas as pd
-import numpy as np
+from machine_learning.linear_algebra import intro_numpy as np
 from smartsolve.preprocessing import SplitData
 from smartsolve.models import LinearRegression, LogisticRegression, DecisionTree
 from smartsolve.evaluation import Validation

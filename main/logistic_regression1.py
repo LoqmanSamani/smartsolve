@@ -1,6 +1,6 @@
 import os
 import joblib
-import numpy as np
+from machine_learning.linear_algebra import intro_numpy as np
 import random
 
 
