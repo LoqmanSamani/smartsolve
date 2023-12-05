@@ -52,7 +52,7 @@ Once the requirements are successfully installed, you can proceed to install `sm
 ```python 
 pip install smartsolve
 ```
-For more information visit: [pypi.org](https://pypi.org/project/smartsolve/)
+pypi-page of smartsolve: [pypi.org](https://pypi.org/project/smartsolve/)
 
 --------------------------------------------------------------------
 
@@ -117,7 +117,9 @@ obj = Validation()
 mse = obj.mean_squared_error(actual='actual labels', predicted=predicted)
 
 ```
-For more examples see this page :[examples](https://github.com/LoqmanSamani/smartsolve/tree/main/examples)
+For more examples, see this page :[examples](https://github.com/LoqmanSamani/smartsolve/tree/main/examples)
+
+For more explanation, see the Medium article: [Introducing smartsolve: a mini machine learning package](https://medium.com/@samaniloqman91/introducing-smartsolve-a-mini-machine-learning-package-a848e14cb07b)
 
 ----------------------------------------------------------
 
