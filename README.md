@@ -125,7 +125,7 @@ For more explanation, see the Medium article: [Introducing smartsolve: a mini ma
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.txt](https://github.com/LoqmanSamani/smartsolve/blob/main/package/smartsolve/LICENSE.txt) file for details.
+This project is licensed under the [MIT LICENSE](https://github.com/LoqmanSamani/smartsolve/blob/main/LICENSE) file for details.
 
 
 
