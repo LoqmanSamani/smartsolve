@@ -14,6 +14,7 @@
 
 
 <div style="border: 2px solid #000; padding: 10px;">
+
 ![Screenshot from 2023-10-28 19-27-06](https://github.com/LoqmanSamani/smartsolve/assets/141053177/9d6cd280-4edd-4745-a9df-1ebc9e08a1cb)
 </div>
 
