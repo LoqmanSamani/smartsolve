@@ -1,7 +1,6 @@
 
 ## smartsolve
 
-
 ![PyPI - Version](https://img.shields.io/pypi/v/smartsolve?style=plastic)
 ![Static Badge](https://img.shields.io/badge/license-MIT-red?style=plastic)
 ![Static Badge](https://img.shields.io/badge/python-blue?style=plastic&logo=python&logoColor=white)
