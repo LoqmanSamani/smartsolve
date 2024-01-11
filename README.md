@@ -1,16 +1,22 @@
 
-# smartsolve
-
--------------------------------------------------------------------------------------------------------------------
+## smartsolve
 
 
-------------------------------------------------------------------------------------------------------------------
+![PyPI - Version](https://img.shields.io/pypi/v/smartsolve?style=plastic)
+![Static Badge](https://img.shields.io/badge/license-MIT-red?style=plastic)
+![Static Badge](https://img.shields.io/badge/python-blue?style=plastic&logo=python&logoColor=white)
+![Static Badge](https://img.shields.io/badge/numpy-midnightblue?style=plastic&logo=NumPy)
+![Static Badge](https://img.shields.io/badge/matplotlib-yellow?style=plastic&logo=seaborn&logoColor=white)
+![Static Badge](https://img.shields.io/badge/seaborn-red?style=plastic&logo=seaborn)
+![Static Badge](https://img.shields.io/badge/pandas-blue?style=plastic&logo=pandas)
+![Static Badge](https://img.shields.io/badge/scikit_learn-orange?style=plastic&logo=scikit-learn&logoColor=white)
+![Static Badge](https://img.shields.io/badge/SciPy-darkblue?style=plastic&logo=scipy&logoColor=white)
 
+
+<div style="border: 2px solid #000; padding: 10px;">
 ![Screenshot from 2023-10-28 19-27-06](https://github.com/LoqmanSamani/smartsolve/assets/141053177/9d6cd280-4edd-4745-a9df-1ebc9e08a1cb)
+</div>
 
----------------------------------------------
-
------------------------------------------------------
 
 
 ### a mini-machine learning python package
