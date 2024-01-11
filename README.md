@@ -12,10 +12,10 @@
 ![Static Badge](https://img.shields.io/badge/SciPy-darkblue?style=plastic&logo=scipy&logoColor=white)
 
 
-<div style="border: 2px solid #000; padding: 10px;">
+
 
 ![Screenshot from 2023-10-28 19-27-06](https://github.com/LoqmanSamani/smartsolve/assets/141053177/9d6cd280-4edd-4745-a9df-1ebc9e08a1cb)
-</div>
+
 
 
 
@@ -26,17 +26,17 @@
 
 [**smartsolve**](https://pypi.org/project/smartsolve/) is a versatile machine learning package that empowers you to excel in data analysis and predictive modeling. With a rich array of machine learning models, it equips you to analyze diverse datasets, including text-based, numerical, and categorical data, and make precise predictions. The package is thoughtfully organized into three essential modules: *preprocessing*, *models*, and *evaluation*, each of which hosts a collection of classes with specialized functionalities.
 
-------------------------------------------------------------------
 
-## Table of Contents
+
+### Table of Contents
 
 - Installation
 - Usage
 - License
 
------------------------------------------------------------------------
 
-## Installation
+
+### Installation
 
 Before installing and using `smartsolve`, please ensure that the following dependencies are installed on your system:
 
@@ -60,9 +60,9 @@ pip install smartsolve
 ```
 pypi-page of smartsolve: [pypi.org](https://pypi.org/project/smartsolve/)
 
---------------------------------------------------------------------
 
-## Usage
+
+### Usage
 
 **smartsolve** offers a comprehensive workflow for machine learning tasks. Here's how you can use it effectively:
 
@@ -127,7 +127,7 @@ For more examples, see this page :[examples](https://github.com/LoqmanSamani/sma
 
 For more explanation, see the Medium article: [Introducing smartsolve: a mini machine learning package](https://medium.com/@samaniloqman91/introducing-smartsolve-a-mini-machine-learning-package-a848e14cb07b)
 
-----------------------------------------------------------
+
 
 ## License
 
